@@ -9,6 +9,7 @@ The test took about 10 hours to complete.
 Unity Package - https://disk.yandex.ru/d/njzLvdKCqjiCmQ
 APK - https://disk.yandex.ru/d/b---X6umIGUBGg
 
+Test task (document) - https://docs.google.com/document/d/1iqV7l3KOc0-7HdraoghoBNkaMIc8N85D/edit?usp=sharing&ouid=116624020997066996066&rtpof=true&sd=true
 
 https://github.com/user-attachments/assets/fafd5a53-2ea0-4348-8201-f37a39c1bcad
 
