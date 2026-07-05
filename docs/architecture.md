@@ -4,7 +4,7 @@
 
 Pendulum Grid Match has a small pure gameplay domain layer, a Unity scene adapter layer, and a thin legacy bootstrapper for the current scene.
 
-The domain layer lives in `Assets/Game/Scripts/Domain` and is compiled by the `Pendulum.Runtime` assembly definition. It has `noEngineReferences` enabled, so it cannot depend on UnityEngine, MonoBehaviours, GameObjects, transforms, colliders, resources, or scene objects.
+The domain layer lives in `Assets/Game/Scripts/Domain` and is compiled by the `Pendulum.Domain` assembly definition. It has `noEngineReferences` enabled, so it cannot depend on UnityEngine, MonoBehaviours, GameObjects, transforms, colliders, resources, or scene objects.
 
 The existing Unity scene layer remains intentionally lightweight and compatible with the current scene setup. It owns physics, trigger views, visual effects, UI, object spawning, and screen transitions.
 
@@ -40,8 +40,8 @@ These classes are covered by EditMode tests and do not require a scene, physics,
 ## Unity Adapter Classes
 
 - `TriggerGridBuilder` still builds the runtime trigger grid in the scene.
-- `TriggerInfo` observes Unity trigger enter/exit/stay events, exposes the occupying circle color, schedules board checks, and gently magnetizes settled circles toward cell centers.
-- `TriggerGridChecker` now snapshots `TriggerInfo` colors into `BoardModel`, delegates match/scoring/game-over decisions to `GameSession`, and applies the result by adding score, playing effects, waking rigidbodies, and destroying matched circles.
+- `TriggerInfo` observes Unity trigger enter/exit/stay events, tracks candidate circles in each cell, exposes the best settled occupant color, schedules board checks, and gently magnetizes settled circles toward cell centers.
+- `TriggerGridChecker` now snapshots `TriggerInfo` colors into `BoardModel`, delegates match/scoring/game-over decisions to `GameSession`, and applies the result through a short resolving coroutine that removes matched circles, waits for Unity physics/destruction to settle, collapses remaining circles, then returns to play.
 - `TriggerGridBuilder` creates lightweight runtime visuals for board cells.
 - `ColorPoints` remains a `ScriptableObject` configuration asset, but now converts its values into domain score data.
 - `CircleColorMapper` centralizes conversion from Unity-facing `CircleColor` values into domain `CellColor` values.
@@ -69,24 +69,26 @@ The Unity layer uses a small explicit state model:
 5. Settled circles are pulled toward cell centers, and trigger occupancy changes schedule board checks.
 6. `TriggerGridChecker.CheckGrid` creates a `BoardModel` snapshot from the trigger cells.
 7. `GameSession.ResolveBoard` runs `MatchDetector`, uses `ScoreCalculator`, and determines whether a full board without matches is game over.
-8. If matches are returned, `TriggerGridChecker` applies Unity effects and destroys the matched circle objects.
+8. If matches are returned, `TriggerGridChecker` enters `Resolving`, applies score/effects/removal, waits across frame and physics boundaries, collapses circles into empty lower cells, then returns to `Playing`.
 9. If no matches exist and the board is full, `GameplayController.EndGame` shows the stats screen and clears spawned circles.
 10. `CheckingLimitingTrigger` handles the height-limit loss condition through Unity trigger timing.
 
 ## Testing Strategy
 
 - EditMode tests cover pure domain logic: row, column, diagonal, empty-cell, full-board, scoring, and multi-match behavior.
-- The CI workflow runs EditMode tests because they are deterministic and do not depend on physics timing or scene loading.
+- The CI workflow runs the pure domain tests outside Unity because they are deterministic and do not require Unity license secrets.
 - PlayMode tests are intentionally deferred until scene references are fully assigned and stable.
 
 ## CI Strategy
 
-`.github/workflows/ci.yml` uses GameCI's Unity test runner to execute EditMode tests on pushes and pull requests. Repository Unity license secrets must be configured before CI can pass on GitHub.
+`.github/workflows/ci.yml` creates a temporary NUnit project, copies the pure domain classes and domain tests into it, and runs `dotnet test` on pushes and pull requests. This verifies the most important gameplay rules without requiring a Unity license in GitHub Actions.
+
+A future Unity CI job should run EditMode or PlayMode tests with GameCI after repository Unity license secrets are configured. The current CI does not validate scene serialization, prefabs, or MonoBehaviour compilation.
 
 ## Current Dependency Issues
 
 - `GameSingleton` still uses fallback scene lookups if references are not assigned in the inspector.
-- `TriggerGridChecker` is slimmer than before, but it still applies multiple scene side effects after domain resolution.
+- `TriggerGridChecker` is slimmer than before, but it still coordinates multiple scene side effects after domain resolution.
 - Circle colors are still generated inside `CircleObject`, which keeps random data generation in a Unity component.
 - The board is still resolved from trigger snapshots rather than a fully domain-owned board update pipeline.
 - Height-limit loss logic remains Unity-side and is not represented in the pure domain layer.

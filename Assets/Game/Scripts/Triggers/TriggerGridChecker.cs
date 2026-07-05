@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using Pendulum.Domain;
 using UnityEngine;
@@ -14,6 +15,7 @@ public class TriggerGridChecker : MonoBehaviour
     private GameplayController GameplayController { get; set; }
     private EffectsController EffectsController { get; set; }
     private ColorPoints ColorPoints { get; set; }
+    private Coroutine ResolveRoutine { get; set; }
 
     public void Construct(GameplayController gameplayController, EffectsController effectsController, ColorPoints colorPoints)
     {
@@ -35,6 +37,7 @@ public class TriggerGridChecker : MonoBehaviour
     private void OnDisable()
     {
         StopChecking();
+        StopResolveRoutine();
     }
 
     public void StartChecking()
@@ -57,6 +60,8 @@ public class TriggerGridChecker : MonoBehaviour
 
     public void ResetBoard()
     {
+        StopResolveRoutine();
+
         if (TriggerGridBuilder?.TriggerInfos == null)
             return;
 
@@ -82,9 +87,7 @@ public class TriggerGridChecker : MonoBehaviour
         var result = GameSession.ResolveBoard();
         if (result.HasMatches)
         {
-            GameplayController.SetResolving();
-            ApplyMatches(result);
-            GameplayController.SetPlaying();
+            StartResolveRoutine(result);
             return;
         }
 
@@ -122,7 +125,42 @@ public class TriggerGridChecker : MonoBehaviour
             colorPoints.CreateScoreCalculator());
     }
 
-    private void ApplyMatches(BoardResolutionResult result)
+    private void StartResolveRoutine(BoardResolutionResult result)
+    {
+        if (ResolveRoutine != null)
+            StopResolveRoutine();
+
+        ResolveRoutine = StartCoroutine(ResolveMatches(result));
+    }
+
+    private void StopResolveRoutine()
+    {
+        if (ResolveRoutine == null)
+            return;
+
+        StopCoroutine(ResolveRoutine);
+        ResolveRoutine = null;
+    }
+
+    private IEnumerator ResolveMatches(BoardResolutionResult result)
+    {
+        StopChecking();
+        GameplayController.SetResolving();
+        ApplyMatchRemoval(result);
+
+        yield return null;
+        yield return new WaitForFixedUpdate();
+
+        ApplyCollapse(result.CollapseMoves);
+
+        yield return new WaitForFixedUpdate();
+
+        ResolveRoutine = null;
+        GameplayController.SetPlaying();
+        ScheduleCheck();
+    }
+
+    private void ApplyMatchRemoval(BoardResolutionResult result)
     {
         GameplayController.AddScore(result.ScoreAwarded);
 
@@ -140,9 +178,6 @@ public class TriggerGridChecker : MonoBehaviour
         {
             TriggerGridBuilder.TriggerInfos[position.Column, position.Row].DestroyCircle();
         }
-
-        ApplyCollapse(result.CollapseMoves);
-        ScheduleCheck();
     }
 
     private void ApplyCollapse(IEnumerable<BoardMove> moves)

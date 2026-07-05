@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 [RequireComponent(typeof(CircleCollider2D))]
@@ -12,7 +13,8 @@ public class TriggerInfo : MonoBehaviour
     [SerializeField, Range(0.01f, 1f), Tooltip("How strongly the cell pulls a settled circle to its center.")]
     private float _magnetStrength = 0.35f;
 
-    private CircleObject CircleObject { get; set; }
+    private readonly List<CircleObject> _circleObjects = new();
+
     private TriggerGridChecker TriggerGridChecker { get; set; }
     private float TimeBelowSpeedThreshold { get; set; }
 
@@ -33,26 +35,29 @@ public class TriggerInfo : MonoBehaviour
         if (!other.TryGetComponent(out CircleObject circleObject))
             return;
 
-        if (CircleObject && CircleObject.Speed <= circleObject.Speed)
-            return;
+        if (!_circleObjects.Contains(circleObject))
+            _circleObjects.Add(circleObject);
 
-        CircleObject = circleObject;
         TimeBelowSpeedThreshold = 0f;
         TriggerGridChecker?.ScheduleCheck();
     }
 
     private void OnTriggerStay2D(Collider2D other)
     {
-        if (!CircleObject || !other.TryGetComponent(out CircleObject circleObject) || circleObject != CircleObject)
+        if (!other.TryGetComponent(out CircleObject circleObject) || !_circleObjects.Contains(circleObject))
             return;
 
-        if (CircleObject.IsAttachedToPendulum)
+        CircleObject selectedCircle = SelectCircle();
+        if (!selectedCircle || circleObject != selectedCircle)
+            return;
+
+        if (selectedCircle.IsAttachedToPendulum)
         {
             TimeBelowSpeedThreshold = 0f;
             return;
         }
 
-        if (CircleObject.Speed > _magnetSpeedThreshold)
+        if (selectedCircle.Speed > _magnetSpeedThreshold)
         {
             TimeBelowSpeedThreshold = 0f;
             return;
@@ -63,64 +68,102 @@ public class TriggerInfo : MonoBehaviour
         if (TimeBelowSpeedThreshold < _magnetDelay)
             return;
 
-        CircleObject.MoveToCellCenter(transform.position, _magnetStrength);
+        selectedCircle.MoveToCellCenter(transform.position, _magnetStrength);
         TriggerGridChecker?.ScheduleCheck();
     }
 
     private void OnTriggerExit2D(Collider2D other)
     {
-        if (!other.TryGetComponent(out CircleObject circleObject) || circleObject != CircleObject)
+        if (!other.TryGetComponent(out CircleObject circleObject))
             return;
 
-        CircleObject = null;
+        _circleObjects.Remove(circleObject);
         TimeBelowSpeedThreshold = 0f;
         TriggerGridChecker?.ScheduleCheck();
     }
 
     public CircleColor GetColor()
     {
-        return CircleObject ? CircleObject.CircleColor : CircleColor.None;
+        CircleObject selectedCircle = SelectCircle();
+        return selectedCircle ? selectedCircle.CircleColor : CircleColor.None;
     }
 
     public CircleObject GetCircle()
     {
-        return CircleObject;
+        return SelectCircle();
     }
 
     public CircleObject ReleaseCircle()
     {
-        CircleObject releasedCircle = CircleObject;
-        CircleObject = null;
+        CircleObject releasedCircle = SelectCircle();
+        if (releasedCircle)
+            _circleObjects.Remove(releasedCircle);
+
         TimeBelowSpeedThreshold = 0f;
         return releasedCircle;
     }
 
     public void PlaceCircle(CircleObject circleObject)
     {
-        CircleObject = circleObject;
+        if (circleObject && !_circleObjects.Contains(circleObject))
+            _circleObjects.Add(circleObject);
+
         TimeBelowSpeedThreshold = 0f;
 
-        if (CircleObject)
-            CircleObject.SettleAtCellCenter(transform.position);
+        if (circleObject)
+            circleObject.SettleAtCellCenter(transform.position);
     }
 
     public void WakeUpRigidbody2D()
     {
-        if (!CircleObject)
+        CircleObject selectedCircle = SelectCircle();
+        if (!selectedCircle)
             return;
         
-        CircleObject.WakeUpRigidbody2D();
+        selectedCircle.WakeUpRigidbody2D();
     }
 
     public void DestroyCircle()
     {
-        if (!CircleObject)
-        {
-            CircleObject = null;
+        CircleObject selectedCircle = SelectCircle();
+        if (!selectedCircle)
             return;
+
+        _circleObjects.Remove(selectedCircle);
+        selectedCircle.DestroyObject();
+    }
+
+    private CircleObject SelectCircle()
+    {
+        RemoveMissingCircles();
+
+        CircleObject bestCircle = null;
+        float bestDistance = float.MaxValue;
+
+        foreach (CircleObject circleObject in _circleObjects)
+        {
+            if (!circleObject || circleObject.IsAttachedToPendulum)
+                continue;
+
+            Vector2 circlePosition = circleObject.transform.position;
+            Vector2 cellPosition = transform.position;
+            float distance = Vector2.SqrMagnitude(circlePosition - cellPosition);
+            if (distance >= bestDistance)
+                continue;
+
+            bestDistance = distance;
+            bestCircle = circleObject;
         }
-        
-        CircleObject.DestroyObject();
-        CircleObject = null;
+
+        return bestCircle;
+    }
+
+    private void RemoveMissingCircles()
+    {
+        for (int i = _circleObjects.Count - 1; i >= 0; i--)
+        {
+            if (!_circleObjects[i])
+                _circleObjects.RemoveAt(i);
+        }
     }
 }

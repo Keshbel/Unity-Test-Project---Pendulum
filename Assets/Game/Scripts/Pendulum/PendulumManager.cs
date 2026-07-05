@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 public class PendulumManager : MonoBehaviour
 {
@@ -12,8 +13,14 @@ public class PendulumManager : MonoBehaviour
 
     public void Construct(GameplayController gameplayController, TriggerGridChecker triggerGridChecker)
     {
+        if (GameplayController != null)
+            GameplayController.OnStateChanged -= OnGameStateChanged;
+
         GameplayController = gameplayController;
         TriggerGridChecker = triggerGridChecker;
+
+        if (GameplayController != null)
+            GameplayController.OnStateChanged += OnGameStateChanged;
     }
 
     private void Awake()
@@ -32,12 +39,18 @@ public class PendulumManager : MonoBehaviour
         CancelInvoke(nameof(SpawnCircleObject));
     }
 
+    private void OnDestroy()
+    {
+        if (GameplayController != null)
+            GameplayController.OnStateChanged -= OnGameStateChanged;
+    }
+
     private void Update()
     {
         if (!GameplayController || GameplayController.State != GameState.Playing)
             return;
 
-        if (!Input.anyKeyDown || !CurrentCircleObject)
+        if (!IsDropInputPressed() || !CurrentCircleObject)
             return;
         
         TriggerGridChecker?.StopChecking();
@@ -66,5 +79,25 @@ public class PendulumManager : MonoBehaviour
         
         CurrentCircleObject.DeactivateHingeJoint();
         CurrentCircleObject = null;
+    }
+
+    private void OnGameStateChanged(GameState state)
+    {
+        if (state != GameState.Playing)
+            return;
+
+        if (!CurrentCircleObject && !IsInvoking(nameof(SpawnCircleObject)))
+            Invoke(nameof(SpawnCircleObject), 0.1f);
+    }
+
+    private static bool IsDropInputPressed()
+    {
+        if (!Input.anyKeyDown)
+            return false;
+
+        if (EventSystem.current && EventSystem.current.IsPointerOverGameObject())
+            return false;
+
+        return true;
     }
 }

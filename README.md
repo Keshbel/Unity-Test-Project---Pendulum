@@ -1,6 +1,6 @@
 # Pendulum Grid Match
 
-[![Unity CI](../../actions/workflows/ci.yml/badge.svg)](../../actions/workflows/ci.yml)
+[![CI](../../actions/workflows/ci.yml/badge.svg)](../../actions/workflows/ci.yml)
 
 A compact Unity gameplay architecture sample focused on physics interaction, match detection, score rules, and testable code.
 
@@ -52,7 +52,7 @@ Assets/Game/
   Tests/EditMode/  Pure gameplay rule tests.
   Sprites/         Project-specific visual assets.
 
-.github/workflows/ Unity CI workflow for EditMode tests.
+.github/workflows/ License-free domain test workflow.
 Assets/JMO Assets/ Third-party visual effect assets used by the project.
 Packages/          Unity package manifest and lock file.
 ProjectSettings/   Unity project settings required to open the project.
@@ -82,11 +82,13 @@ Run them from:
 - Unity Editor: `Window > General > Test Runner`
 - Command line: Unity batchmode test execution for the `Pendulum.Tests.EditMode` assembly
 
+The GitHub workflow uses a separate license-free path that copies the pure domain files into a temporary NUnit project and runs `dotnet test`. That CI path validates domain rules only; it is not a replacement for opening the scene in Unity before publishing a build.
+
 ## CI
 
-The repository includes `.github/workflows/ci.yml`, which runs EditMode tests with GameCI's Unity test runner.
+The repository includes `.github/workflows/ci.yml`, which runs the pure C# domain tests through a temporary NUnit project. This keeps the default CI path license-free and verifies the board, match, scoring, and session rules without opening Unity.
 
-Before enabling the workflow in GitHub, configure Unity license secrets for the repository. The workflow expects `UNITY_LICENSE`, `UNITY_EMAIL`, and `UNITY_PASSWORD` unless the project is later changed to another supported GameCI licensing mode.
+Unity EditMode or PlayMode automation should be added as a separate job after Unity license secrets are configured for the repository. The current CI does not compile scenes, prefabs, or MonoBehaviour scripts.
 
 ## Build Information
 

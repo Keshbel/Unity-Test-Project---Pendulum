@@ -14,7 +14,7 @@ Pass 1 focused on repository presentation and safe cleanup:
 
 Pass 2 extracted the core board rules into testable pure C#:
 
-- Added `Pendulum.Runtime` assembly for the pure domain layer.
+- Added `Pendulum.Domain` assembly for the pure domain layer.
 - Added `BoardModel`, `BoardCell`, `BoardPosition`, and `CellColor`.
 - Added `MatchDetector`, `MatchLine`, and `MatchLineType`.
 - Added `ScoreCalculator`, `GameSession`, and `BoardResolutionResult`.
@@ -34,29 +34,32 @@ Pass 3 focused on Unity integration and final repository quality:
 - Added bootstrap validation with clear `Debug.LogError` messages for missing scene references.
 - Centralized Unity-to-domain color mapping in `CircleColorMapper`.
 - Added `SpawnCircleController.ClearSpawnedCircles` so end-game cleanup no longer needs a scene-wide circle search.
-- Added GitHub Actions CI for Unity EditMode tests.
+- Added GitHub Actions CI for license-free pure domain tests.
 - Updated README and architecture documentation for final portfolio presentation.
 - Added runtime cell visuals and a light cell-center magnet to make match placement clearer.
 - Added a main-menu gameplay hint and simple English/Russian UI localization toggle backed by a ScriptableObject table.
 - Improved board check scheduling by reacting to trigger occupancy changes instead of relying only on a single delayed check.
+- Improved trigger cell occupancy by tracking candidate circles per cell and selecting the best settled occupant for board snapshots.
+- Changed match resolution into a coroutine that waits across Unity frame/physics boundaries before collapsing remaining circles.
+- Removed ScriptableObject constructor initialization from `ColorPoints` and moved default setup into Unity-safe validation hooks.
 
 ## Intentionally Not Changed Yet
 
 - The scene was not rewired into a full presenter/controller architecture.
 - Existing prefabs, scenes, sprites, materials, and third-party visual effects were not removed.
 - `GameSingleton` was not eliminated, but direct gameplay usage was removed and it is now isolated.
-- Circle spawning, pendulum physics, and trigger occupancy behavior were not redesigned.
+- Circle spawning and pendulum physics were not redesigned.
 - Height-limit loss remains handled by `CheckingLimitingTrigger`.
 - No PlayMode tests were added because the remaining scene-side behavior depends on Unity timing and current scene wiring.
 
 ## Known Risks
 
 - Manual Unity validation is still needed when scene references are assigned or changed.
-- `TriggerGridChecker` still applies score, effects, physics wake-up, and destruction after the domain result.
-- The delayed grid check now uses Unity `Invoke` instead of `async void` polling; timing should be checked in the scene.
+- `TriggerGridChecker` still coordinates score, effects, physics wake-up, destruction, and collapse after the domain result.
+- The delayed grid check still uses Unity `Invoke`; timing should be checked in the scene.
 - `Resources.Load` remains as a compatibility fallback for `ColorPoints` when bootstrap references are not assigned.
 - Multiple simultaneous matches are now resolved from one board snapshot and scored together. This is cleaner and tested, but it should be manually compared against the intended feel.
-- CI requires Unity license secrets before it can pass in GitHub Actions.
+- CI currently verifies only pure domain logic outside Unity; a Unity test job still requires repository license secrets.
 - Cell magnet values are intentionally conservative, but they should be tuned in Play Mode if balls feel too sticky or not sticky enough.
 
 ## Recommended Future Steps

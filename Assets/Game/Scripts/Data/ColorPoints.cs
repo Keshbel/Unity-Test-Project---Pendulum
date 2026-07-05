@@ -14,20 +14,14 @@ public class ColorPoints : ScriptableObject
 
     public IReadOnlyList<ColorPoint> ColorValuePoints => _colorValuePoints;
 
-    public ColorPoints()
+    private void Reset()
     {
-        _colorValuePoints = new List<ColorPoint>();
-        
-        for (int i = 1; i < Enum.GetValues(typeof(CircleColor)).Length; i++)
-        {
-            ColorPoint colorPoint = new ColorPoint
-            {
-                colorValue = 1,
-                circleColor = (CircleColor)i
-            };
+        EnsureDefaultValues();
+    }
 
-            _colorValuePoints.Add(colorPoint);
-        }
+    private void OnValidate()
+    {
+        EnsureDefaultValues();
     }
 
     public int GetScoreForColor(CircleColor circleColor)
@@ -43,6 +37,7 @@ public class ColorPoints : ScriptableObject
     public Dictionary<CellColor, int> ToScoreValues()
     {
         Dictionary<CellColor, int> scoreValues = new Dictionary<CellColor, int>();
+        EnsureDefaultValues();
 
         foreach (ColorPoint colorPoint in _colorValuePoints)
         {
@@ -50,6 +45,24 @@ public class ColorPoints : ScriptableObject
         }
 
         return scoreValues;
+    }
+
+    private void EnsureDefaultValues()
+    {
+        _colorValuePoints ??= new List<ColorPoint>();
+
+        for (int i = 1; i < Enum.GetValues(typeof(CircleColor)).Length; i++)
+        {
+            CircleColor circleColor = (CircleColor)i;
+            if (_colorValuePoints.Any(colorPoint => colorPoint.circleColor == circleColor))
+                continue;
+
+            _colorValuePoints.Add(new ColorPoint
+            {
+                colorValue = 1,
+                circleColor = circleColor
+            });
+        }
     }
 }
 
