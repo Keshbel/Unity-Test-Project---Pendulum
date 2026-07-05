@@ -14,7 +14,8 @@ namespace Pendulum.Domain
 
         public int Calculate(CellColor color)
         {
-            if (color == CellColor.None) return 0;
+            if (color == CellColor.None)
+                return 0;
 
             if (!_scoreByColor.TryGetValue(color, out var score))
             {
@@ -26,7 +27,8 @@ namespace Pendulum.Domain
 
         public int Calculate(IEnumerable<MatchLine> matches)
         {
-            if (matches == null) throw new ArgumentNullException(nameof(matches));
+            if (matches == null)
+                throw new ArgumentNullException(nameof(matches));
 
             var total = 0;
             foreach (var match in matches)

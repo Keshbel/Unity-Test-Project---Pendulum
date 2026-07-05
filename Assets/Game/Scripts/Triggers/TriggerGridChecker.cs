@@ -4,10 +4,10 @@ using UnityEngine;
 
 public class TriggerGridChecker : MonoBehaviour
 {
-    [field: Header("Delay")]
+    [Header("Delay")]
     
-    [field: SerializeField, Tooltip("Delay between grid checks in seconds.")]
-    private float CheckerDelay { get; set; } = 2f;
+    [SerializeField, Tooltip("Delay between grid checks in seconds.")]
+    private float _checkerDelay = 2f;
     
     private TriggerGridBuilder TriggerGridBuilder { get; set; }
     private GameSession GameSession { get; set; }
@@ -39,8 +39,7 @@ public class TriggerGridChecker : MonoBehaviour
 
     public void StartChecking()
     {
-        StopChecking();
-        Invoke(nameof(CheckGrid), CheckerDelay);
+        ScheduleCheck();
     }
 
     public void StopChecking()
@@ -48,21 +47,35 @@ public class TriggerGridChecker : MonoBehaviour
         CancelInvoke(nameof(CheckGrid));
     }
 
+    public void ScheduleCheck()
+    {
+        if (IsInvoking(nameof(CheckGrid)))
+            return;
+
+        Invoke(nameof(CheckGrid), _checkerDelay);
+    }
+
     public void ResetBoard()
     {
-        if (TriggerGridBuilder?.TriggerInfos == null) return;
+        if (TriggerGridBuilder?.TriggerInfos == null)
+            return;
 
         GameSession = CreateGameSession(CreateBoardSnapshot());
     }
 
     public void CheckGrid()
     {
-        if (TriggerGridBuilder.TriggerInfos == null) return;
-        if (!GameplayController || GameplayController.State != GameState.Playing) return;
+        if (TriggerGridBuilder.TriggerInfos == null)
+            return;
+
+        if (!GameplayController || GameplayController.State != GameState.Playing)
+            return;
 
         var board = CreateBoardSnapshot();
         GameSession ??= CreateGameSession(board);
-        if (GameSession == null) return;
+
+        if (GameSession == null)
+            return;
 
         GameSession.ReplaceBoard(board);
 
@@ -76,9 +89,7 @@ public class TriggerGridChecker : MonoBehaviour
         }
 
         if (result.IsGameOver)
-        {
             GameplayController.EndGame();
-        }
     }
 
     private BoardModel CreateBoardSnapshot()
@@ -118,24 +129,43 @@ public class TriggerGridChecker : MonoBehaviour
         EffectsController?.PlayExplosionEffect();
             
         // Wake sleeping bodies before removing the matched line so physics contacts refresh.
-        foreach (var triggerInfo in TriggerGridBuilder.TriggerInfos)
+        foreach (TriggerInfo triggerInfo in TriggerGridBuilder.TriggerInfos)
         {
             triggerInfo.WakeUpRigidbody2D();
         }
 
-        foreach (var position in GetMatchedPositions(result.Matches))
+        HashSet<BoardPosition> matchedPositions = GetMatchedPositions(result.Matches);
+
+        foreach (BoardPosition position in matchedPositions)
         {
             TriggerGridBuilder.TriggerInfos[position.Column, position.Row].DestroyCircle();
+        }
+
+        ApplyCollapse(result.CollapseMoves);
+        ScheduleCheck();
+    }
+
+    private void ApplyCollapse(IEnumerable<BoardMove> moves)
+    {
+        foreach (BoardMove move in moves)
+        {
+            TriggerInfo sourceCell = TriggerGridBuilder.TriggerInfos[move.Source.Column, move.Source.Row];
+            CircleObject circle = sourceCell.ReleaseCircle();
+
+            if (!circle)
+                continue;
+
+            TriggerGridBuilder.TriggerInfos[move.Target.Column, move.Target.Row].PlaceCircle(circle);
         }
     }
 
     private static HashSet<BoardPosition> GetMatchedPositions(IEnumerable<MatchLine> matches)
     {
-        var positions = new HashSet<BoardPosition>();
+        HashSet<BoardPosition> positions = new HashSet<BoardPosition>();
 
-        foreach (var match in matches)
+        foreach (MatchLine match in matches)
         {
-            foreach (var position in match.Positions)
+            foreach (BoardPosition position in match.Positions)
             {
                 positions.Add(position);
             }

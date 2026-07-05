@@ -1,6 +1,7 @@
 #nullable enable
 
 using System;
+using System.Collections.Generic;
 
 namespace Pendulum.Domain
 {
@@ -34,11 +35,33 @@ namespace Pendulum.Domain
         {
             var matches = _matchDetector.FindMatches(Board);
             var scoreAwarded = _scoreCalculator.Calculate(matches);
+            IReadOnlyList<BoardMove> collapseMoves = Array.Empty<BoardMove>();
             var isGameOver = matches.Count == 0 && Board.IsFull();
+
+            if (matches.Count > 0)
+            {
+                collapseMoves = Board.RemoveAndCollapse(GetMatchedPositions(matches));
+                isGameOver = false;
+            }
 
             Score += scoreAwarded;
 
-            return new BoardResolutionResult(matches, scoreAwarded, isGameOver);
+            return new BoardResolutionResult(matches, collapseMoves, scoreAwarded, isGameOver);
+        }
+
+        private static IEnumerable<BoardPosition> GetMatchedPositions(IEnumerable<MatchLine> matches)
+        {
+            var positions = new HashSet<BoardPosition>();
+
+            foreach (MatchLine match in matches)
+            {
+                foreach (BoardPosition position in match.Positions)
+                {
+                    positions.Add(position);
+                }
+            }
+
+            return positions;
         }
     }
 }

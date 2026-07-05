@@ -2,8 +2,9 @@ using UnityEngine;
 
 public class ScreenObject : MonoBehaviour
 {
-    [field: SerializeField]
-    public GameScreen GameScreen { get; private set; }
+    [SerializeField] private GameScreen _gameScreen;
+
+    public GameScreen GameScreen => _gameScreen;
 }
 
 public enum GameScreen

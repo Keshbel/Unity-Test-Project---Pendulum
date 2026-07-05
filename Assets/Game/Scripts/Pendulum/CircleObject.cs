@@ -6,13 +6,12 @@ using Random = UnityEngine.Random;
 public class CircleObject : MonoBehaviour
 {
     public CircleColor CircleColor { get; private set; }
+    public bool IsAttachedToPendulum => HingeJoint2D && HingeJoint2D.enabled;
+    public float Speed => Rigidbody2D ? Rigidbody2D.linearVelocity.magnitude : 0f;
     
-    #region Privates
     private Rigidbody2D Rigidbody2D { get; set; }
     private SpriteRenderer SpriteRenderer { get; set; }
     private HingeJoint2D HingeJoint2D { get; set; }
-    
-    #endregion
 
     private void Awake()
     {
@@ -25,7 +24,8 @@ public class CircleObject : MonoBehaviour
 
     public void SetConnectedRigidbody2D(Rigidbody2D connectedRigidbody2D)
     {
-        if (!HingeJoint2D) return;
+        if (!HingeJoint2D)
+            return;
         
         HingeJoint2D.connectedBody = connectedRigidbody2D;
     }
@@ -41,6 +41,29 @@ public class CircleObject : MonoBehaviour
         Rigidbody2D.WakeUp();
     }
 
+    public void MoveToCellCenter(Vector3 worldPosition, float strength)
+    {
+        if (!Rigidbody2D || IsAttachedToPendulum)
+            return;
+
+        Vector2 nextPosition = Vector2.Lerp(Rigidbody2D.position, worldPosition, strength);
+        Rigidbody2D.MovePosition(nextPosition);
+        Rigidbody2D.linearVelocity *= 0.5f;
+        Rigidbody2D.angularVelocity *= 0.5f;
+    }
+
+    public void SettleAtCellCenter(Vector3 worldPosition)
+    {
+        if (!Rigidbody2D || IsAttachedToPendulum)
+            return;
+
+        Vector2 targetPosition = worldPosition;
+        Rigidbody2D.position = targetPosition;
+        Rigidbody2D.linearVelocity = Vector2.zero;
+        Rigidbody2D.angularVelocity = 0f;
+        transform.position = worldPosition;
+    }
+
     public void DestroyObject()
     {
         Destroy(gameObject);
@@ -48,12 +71,13 @@ public class CircleObject : MonoBehaviour
     
     private void ChangeColor()
     {
-        var random = Random.Range(1, Enum.GetValues(typeof(CircleColor)).Length);
+        int random = Random.Range(1, Enum.GetValues(typeof(CircleColor)).Length);
         CircleColor = (CircleColor)random;
-        var stringColor = CircleColor.ToString();
-        var isColor = ColorUtility.TryParseHtmlString(stringColor, out var color);
+        string stringColor = CircleColor.ToString();
+        bool isColor = ColorUtility.TryParseHtmlString(stringColor, out Color color);
         
-        if (isColor) SpriteRenderer.color = color;
+        if (isColor)
+            SpriteRenderer.color = color;
     }
 }
 

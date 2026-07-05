@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace Pendulum.Domain
 {
@@ -8,8 +9,11 @@ namespace Pendulum.Domain
 
         public BoardModel(int columns, int rows)
         {
-            if (columns <= 0) throw new ArgumentOutOfRangeException(nameof(columns));
-            if (rows <= 0) throw new ArgumentOutOfRangeException(nameof(rows));
+            if (columns <= 0)
+                throw new ArgumentOutOfRangeException(nameof(columns));
+
+            if (rows <= 0)
+                throw new ArgumentOutOfRangeException(nameof(rows));
 
             Columns = columns;
             Rows = rows;
@@ -42,7 +46,8 @@ namespace Pendulum.Domain
             {
                 for (var row = 0; row < Rows; row++)
                 {
-                    if (_cells[column, row] == CellColor.None) return false;
+                    if (_cells[column, row] == CellColor.None)
+                        return false;
                 }
             }
 
@@ -64,10 +69,53 @@ namespace Pendulum.Domain
             return clone;
         }
 
+        public IReadOnlyList<BoardMove> RemoveAndCollapse(IEnumerable<BoardPosition> clearedPositions)
+        {
+            if (clearedPositions == null)
+                throw new ArgumentNullException(nameof(clearedPositions));
+
+            var cleared = new HashSet<BoardPosition>(clearedPositions);
+            var moves = new List<BoardMove>();
+
+            foreach (BoardPosition position in cleared)
+                SetCell(position.Column, position.Row, CellColor.None);
+
+            for (int column = 0; column < Columns; column++)
+            {
+                int targetRow = Rows - 1;
+
+                for (int sourceRow = Rows - 1; sourceRow >= 0; sourceRow--)
+                {
+                    CellColor color = GetCell(column, sourceRow);
+                    if (color == CellColor.None)
+                        continue;
+
+                    if (targetRow != sourceRow)
+                    {
+                        SetCell(column, targetRow, color);
+                        SetCell(column, sourceRow, CellColor.None);
+                        moves.Add(new BoardMove(
+                            new BoardPosition(column, sourceRow),
+                            new BoardPosition(column, targetRow)));
+                    }
+
+                    targetRow--;
+                }
+
+                for (int row = targetRow; row >= 0; row--)
+                    SetCell(column, row, CellColor.None);
+            }
+
+            return moves;
+        }
+
         private void ValidatePosition(int column, int row)
         {
-            if (column < 0 || column >= Columns) throw new ArgumentOutOfRangeException(nameof(column));
-            if (row < 0 || row >= Rows) throw new ArgumentOutOfRangeException(nameof(row));
+            if (column < 0 || column >= Columns)
+                throw new ArgumentOutOfRangeException(nameof(column));
+
+            if (row < 0 || row >= Rows)
+                throw new ArgumentOutOfRangeException(nameof(row));
         }
     }
 }

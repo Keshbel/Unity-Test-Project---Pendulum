@@ -7,17 +7,18 @@ public class GameplayController : MonoBehaviour
     public event Action<int> OnAddScore;
     public event Action<GameState> OnStateChanged;
     
-    [field: Header("States")]
+    [Header("States")]
     
-    [field: SerializeField]
-    public bool IsGame { get; private set; }
+    [SerializeField] private bool _isGame;
     
     
-    [field: Header("Options")]
+    [Header("Options")]
     
-    [field: SerializeField, Tooltip("Score value for each circle color.")]
-    public ColorPoints ColorPoints { get; private set; }
+    [SerializeField, Tooltip("Score value for each circle color.")]
+    private ColorPoints _colorPoints;
     
+    public bool IsGame => _isGame;
+    public ColorPoints ColorPoints => _colorPoints;
     public int Score { get; private set; }
     public GameState State { get; private set; } = GameState.Menu;
 
@@ -35,7 +36,9 @@ public class GameplayController : MonoBehaviour
         ScreenManager = screenManager;
         TriggerGridChecker = triggerGridChecker;
         SpawnCircleController = spawnCircleController;
-        if (colorPoints) ColorPoints = colorPoints;
+
+        if (colorPoints)
+            _colorPoints = colorPoints;
 
         BuildScoreCalculator();
         SetState(GameState.Menu);
@@ -43,13 +46,17 @@ public class GameplayController : MonoBehaviour
 
     private void Awake()
     {
-        if (!ColorPoints)
+        if (!_colorPoints)
         {
-            var load = Resources.Load<ColorPoints>("Color Points");
-            if (load) ColorPoints = load;
+            ColorPoints loadedColorPoints = Resources.Load<ColorPoints>("Color Points/Color Points Data");
+
+            if (loadedColorPoints)
+                _colorPoints = loadedColorPoints;
         }
 
-        if (ColorPoints) BuildScoreCalculator();
+        if (_colorPoints)
+            BuildScoreCalculator();
+
         SetState(GameState.Menu);
     }
 
@@ -96,35 +103,32 @@ public class GameplayController : MonoBehaviour
 
     private void BuildScoreCalculator()
     {
-        if (!ColorPoints)
+        if (!_colorPoints)
         {
             Debug.LogError("ColorPoints config is missing. Score calculation cannot be initialized.", this);
             return;
         }
 
-        ScoreCalculator = ColorPoints.CreateScoreCalculator();
+        ScoreCalculator = _colorPoints.CreateScoreCalculator();
     }
 
     private void EnsureScoreCalculator()
     {
-        if (ScoreCalculator != null) return;
+        if (ScoreCalculator != null)
+            return;
 
         BuildScoreCalculator();
         if (ScoreCalculator == null)
-        {
             throw new InvalidOperationException("ScoreCalculator is not initialized.");
-        }
     }
 
     private void SetState(GameState state)
     {
         State = state;
-        IsGame = state == GameState.Playing;
+        _isGame = state == GameState.Playing;
 
         if (ScreenManager)
-        {
             ScreenManager.SetGameScreen(ToGameScreen(state));
-        }
 
         OnStateChanged?.Invoke(state);
     }

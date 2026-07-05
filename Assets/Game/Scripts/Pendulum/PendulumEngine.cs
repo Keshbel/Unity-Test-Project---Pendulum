@@ -3,21 +3,18 @@ using UnityEngine;
 [RequireComponent(typeof(Rigidbody2D))]
 public class PendulumEngine : MonoBehaviour
 {
-    [field: Header("Options")]
+    [Header("Options")]
     
-    [field: SerializeField] 
-    public float MovementSpeed { get; private set; }
+    [SerializeField] private float _movementSpeed;
     
-    [field: SerializeField] 
-    public float Angle { get; private set; }
+    [SerializeField] private float _angle;
 
-    #region Privates
+    public float MovementSpeed => _movementSpeed;
+    public float Angle => _angle;
     
     private bool MovingClockwise { get; set; }
     
     private Rigidbody2D _rigidbody2D;
-    
-    #endregion
     
     private void Awake()
     {
@@ -31,8 +28,10 @@ public class PendulumEngine : MonoBehaviour
 
     private void TryChangeMoveDirection()
     {
-        if (transform.rotation.z > Angle) MovingClockwise = true;
-        else if (transform.rotation.z < -Angle) MovingClockwise = false;
+        if (transform.rotation.z > Angle)
+            MovingClockwise = true;
+        else if (transform.rotation.z < -Angle)
+            MovingClockwise = false;
     }
 
     private void Move()

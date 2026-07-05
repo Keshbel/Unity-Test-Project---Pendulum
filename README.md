@@ -10,6 +10,8 @@ Pendulum Grid Match is a small 2D Unity project where colored circles are releas
 
 The game ends when the grid is full without a valid match or when circles remain above the grid height limit for too long.
 
+The board cells are shown visually during gameplay. When a released ball slows down inside a cell, the cell gently pulls it toward the center to make matches easier to read and resolve.
+
 ## Key Technical Highlights
 
 - Physics-driven pendulum movement and circle drops using Unity 2D rigidbodies and joints.
@@ -18,6 +20,8 @@ The game ends when the grid is full without a valid match or when circles remain
 - Pure C# board, match, scoring, and game-session rules covered by EditMode tests.
 - Explicit `GameState` flow for menu, playing, resolving, and game-over states.
 - Legacy scene bootstrap isolated in one place while gameplay classes use constructed dependencies.
+- Runtime cell visuals and a light cell magnet help make the board state easier to read.
+- Main menu hint text and a simple English/Russian language toggle are driven by a localization table asset.
 - Simple screen flow for menu, gameplay, and results states.
 - Small controller classes that make the current responsibilities easy to inspect before deeper refactoring.
 

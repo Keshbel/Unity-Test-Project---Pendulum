@@ -2,15 +2,15 @@ using UnityEngine;
 
 public class EffectsController : MonoBehaviour
 {
-    [field: Header("Explosion")]
+    [Header("Explosion")]
     
-    [field: SerializeField]
-    public ParticleSystem ExplosionEffect { get; private set; }
+    [SerializeField] private ParticleSystem _explosionEffect;
 
     public void PlayExplosionEffect()
     {
-        if (!ExplosionEffect) return;
+        if (!_explosionEffect)
+            return;
         
-        ExplosionEffect.Play();
+        _explosionEffect.Play();
     }
 }

@@ -1,4 +1,4 @@
-name: Unity CI
+name: CI
 
 on:
   pull_request:
@@ -8,8 +8,8 @@ on:
       - master
 
 jobs:
-  editmode-tests:
-    name: EditMode Tests
+  domain-tests:
+    name: Domain Tests
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -17,29 +17,28 @@ jobs:
         with:
           lfs: true
 
-      - name: Cache Unity Library
-        uses: actions/cache@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
         with:
-          path: Library
-          key: Library-${{ runner.os }}-${{ hashFiles('Packages/manifest.json', 'Packages/packages-lock.json', 'ProjectSettings/ProjectVersion.txt') }}
-          restore-keys: |
-            Library-${{ runner.os }}-
+          dotnet-version: 8.0.x
 
-      - name: Run EditMode tests
-        uses: game-ci/unity-test-runner@v4
-        env:
-          # Configure these repository secrets before enabling CI on GitHub.
-          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
-          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
-          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
-        with:
-          projectPath: .
-          testMode: editmode
-          githubToken: ${{ secrets.GITHUB_TOKEN }}
+      - name: Run pure domain tests
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          temp_project="$RUNNER_TEMP/DomainNUnitCheck"
+          dotnet new nunit -o "$temp_project" --force
+          rm "$temp_project/UnitTest1.cs"
+
+          cp Assets/Game/Scripts/Domain/*.cs "$temp_project/"
+          cp Assets/Game/Tests/EditMode/DomainRulesTests.cs "$temp_project/"
+
+          dotnet test "$temp_project" --nologo --logger trx --results-directory "$temp_project/TestResults"
 
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: editmode-test-results
-          path: artifacts
+          name: domain-test-results
+          path: ${{ runner.temp }}/DomainNUnitCheck/TestResults

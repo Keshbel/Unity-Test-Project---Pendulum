@@ -7,30 +7,32 @@ using UnityEngine;
 [CreateAssetMenu]
 public class ColorPoints : ScriptableObject
 {
-    [field: Header("Color Value Points")]
+    [Header("Color Value Points")]
     
-    [field: SerializeField, Tooltip("Score awarded for each circle color.")]
-    public List<ColorPoint> ColorValuePoints { get; private set; }
+    [SerializeField, Tooltip("Score awarded for each circle color.")]
+    private List<ColorPoint> _colorValuePoints;
+
+    public IReadOnlyList<ColorPoint> ColorValuePoints => _colorValuePoints;
 
     public ColorPoints()
     {
-        ColorValuePoints = new List<ColorPoint>();
+        _colorValuePoints = new List<ColorPoint>();
         
         for (int i = 1; i < Enum.GetValues(typeof(CircleColor)).Length; i++)
         {
-            var colorPoint = new ColorPoint
+            ColorPoint colorPoint = new ColorPoint
             {
                 colorValue = 1,
                 circleColor = (CircleColor)i
             };
 
-            ColorValuePoints.Add(colorPoint);
+            _colorValuePoints.Add(colorPoint);
         }
     }
 
     public int GetScoreForColor(CircleColor circleColor)
     {
-        return ColorValuePoints.FirstOrDefault(colorPoint => colorPoint.circleColor == circleColor).colorValue;
+        return _colorValuePoints.FirstOrDefault(colorPoint => colorPoint.circleColor == circleColor).colorValue;
     }
 
     public ScoreCalculator CreateScoreCalculator()
@@ -40,9 +42,9 @@ public class ColorPoints : ScriptableObject
 
     public Dictionary<CellColor, int> ToScoreValues()
     {
-        var scoreValues = new Dictionary<CellColor, int>();
+        Dictionary<CellColor, int> scoreValues = new Dictionary<CellColor, int>();
 
-        foreach (var colorPoint in ColorValuePoints)
+        foreach (ColorPoint colorPoint in _colorValuePoints)
         {
             scoreValues[CircleColorMapper.ToCellColor(colorPoint.circleColor)] = colorPoint.colorValue;
         }

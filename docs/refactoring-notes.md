@@ -36,6 +36,9 @@ Pass 3 focused on Unity integration and final repository quality:
 - Added `SpawnCircleController.ClearSpawnedCircles` so end-game cleanup no longer needs a scene-wide circle search.
 - Added GitHub Actions CI for Unity EditMode tests.
 - Updated README and architecture documentation for final portfolio presentation.
+- Added runtime cell visuals and a light cell-center magnet to make match placement clearer.
+- Added a main-menu gameplay hint and simple English/Russian UI localization toggle backed by a ScriptableObject table.
+- Improved board check scheduling by reacting to trigger occupancy changes instead of relying only on a single delayed check.
 
 ## Intentionally Not Changed Yet
 
@@ -54,6 +57,7 @@ Pass 3 focused on Unity integration and final repository quality:
 - `Resources.Load` remains as a compatibility fallback for `ColorPoints` when bootstrap references are not assigned.
 - Multiple simultaneous matches are now resolved from one board snapshot and scored together. This is cleaner and tested, but it should be manually compared against the intended feel.
 - CI requires Unity license secrets before it can pass in GitHub Actions.
+- Cell magnet values are intentionally conservative, but they should be tuned in Play Mode if balls feel too sticky or not sticky enough.
 
 ## Recommended Future Steps
 

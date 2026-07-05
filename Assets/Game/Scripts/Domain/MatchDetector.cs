@@ -21,7 +21,8 @@ namespace Pendulum.Domain
             {
                 var positions = new List<BoardPosition>();
                 var firstColor = board.GetCell(0, row);
-                if (firstColor == CellColor.None) continue;
+                if (firstColor == CellColor.None)
+                    continue;
 
                 for (var column = 0; column < board.Columns; column++)
                 {
@@ -35,9 +36,7 @@ namespace Pendulum.Domain
                 }
 
                 if (positions.Count == board.Columns)
-                {
                     matches.Add(new MatchLine(MatchLineType.Horizontal, firstColor, positions));
-                }
             }
         }
 
@@ -47,7 +46,8 @@ namespace Pendulum.Domain
             {
                 var positions = new List<BoardPosition>();
                 var firstColor = board.GetCell(column, 0);
-                if (firstColor == CellColor.None) continue;
+                if (firstColor == CellColor.None)
+                    continue;
 
                 for (var row = 0; row < board.Rows; row++)
                 {
@@ -61,15 +61,14 @@ namespace Pendulum.Domain
                 }
 
                 if (positions.Count == board.Rows)
-                {
                     matches.Add(new MatchLine(MatchLineType.Vertical, firstColor, positions));
-                }
             }
         }
 
         private static void AddDiagonalMatches(BoardModel board, ICollection<MatchLine> matches)
         {
-            if (board.Columns != board.Rows) return;
+            if (board.Columns != board.Rows)
+                return;
 
             AddMainDiagonalMatch(board, matches);
             AddAntiDiagonalMatch(board, matches);
@@ -79,14 +78,13 @@ namespace Pendulum.Domain
         {
             var positions = new List<BoardPosition>();
             var firstColor = board.GetCell(0, 0);
-            if (firstColor == CellColor.None) return;
+            if (firstColor == CellColor.None)
+                return;
 
             for (var index = 0; index < board.Columns; index++)
             {
                 if (board.GetCell(index, index) != firstColor)
-                {
                     return;
-                }
 
                 positions.Add(new BoardPosition(index, index));
             }
@@ -98,15 +96,14 @@ namespace Pendulum.Domain
         {
             var positions = new List<BoardPosition>();
             var firstColor = board.GetCell(0, board.Rows - 1);
-            if (firstColor == CellColor.None) return;
+            if (firstColor == CellColor.None)
+                return;
 
             for (var column = 0; column < board.Columns; column++)
             {
                 var row = board.Rows - 1 - column;
                 if (board.GetCell(column, row) != firstColor)
-                {
                     return;
-                }
 
                 positions.Add(new BoardPosition(column, row));
             }

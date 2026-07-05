@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 75df4a86f9caf2e499a6b2bfca46d099, type: 3}
   m_Name: Color Points Data
   m_EditorClassIdentifier: 
-  <ColorValuePoints>k__BackingField:
+  _colorValuePoints:
   - circleColor: 1
     colorValue: 1
   - circleColor: 2

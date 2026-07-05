@@ -4,19 +4,16 @@ using UnityEngine;
 
 public class AddScoreAnimation : MonoBehaviour
 {
-    [field: Header("UI")]
+    [Header("UI")]
     
-    [field: SerializeField] 
-    private TMP_Text ScoreText { get; set; }
+    [SerializeField] private TMP_Text _scoreText;
 
 
-    [field: Header("Options")]
+    [Header("Options")]
     
-    [field: SerializeField]
-    private float Duration { get; set; } = 2f;
+    [SerializeField] private float _duration = 2f;
 
-    [field: SerializeField] 
-    private float MaxScale { get; set; } = 1.5f;
+    [SerializeField] private float _maxScale = 1.5f;
     
     private Tweener _tweener;
     private GameplayController GameplayController { get; set; }
@@ -24,43 +21,38 @@ public class AddScoreAnimation : MonoBehaviour
     public void Construct(GameplayController gameplayController)
     {
         if (GameplayController != null)
-        {
             GameplayController.OnAddScore -= SetAdditionalScore;
-        }
 
         GameplayController = gameplayController;
         if (GameplayController != null)
-        {
             GameplayController.OnAddScore += SetAdditionalScore;
-        }
     }
 
     private void Awake()
     {
-        if (!ScoreText) ScoreText = GetComponent<TMP_Text>();
+        if (!_scoreText)
+            _scoreText = GetComponent<TMP_Text>();
     }
 
     private void OnDestroy()
     {
         if (GameplayController != null)
-        {
             GameplayController.OnAddScore -= SetAdditionalScore;
-        }
     }
 
     private void StartAnimation()
     {
         _tweener?.Kill();
         
-        _tweener = ScoreText.transform.DOScale(MaxScale, Duration).OnComplete(() =>
+        _tweener = _scoreText.transform.DOScale(_maxScale, _duration).OnComplete(() =>
         {
-            _tweener = ScoreText.transform.DOScale(0, Duration);
+            _tweener = _scoreText.transform.DOScale(0, _duration);
         });
     }
 
     private void SetAdditionalScore(int score)
     {
-        ScoreText.text = "+" + score;
+        _scoreText.text = "+" + score;
         StartAnimation();
     }
 }

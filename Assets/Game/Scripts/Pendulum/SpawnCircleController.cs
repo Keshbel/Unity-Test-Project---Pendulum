@@ -3,19 +3,17 @@ using System.Collections.Generic;
 
 public class SpawnCircleController : MonoBehaviour
 {
-    [field: Header("Spawn Options")]
+    [Header("Spawn Options")]
     
-    [field: SerializeField] 
-    private Transform SpawnTransform { get; set; }
+    [SerializeField] private Transform _spawnTransform;
     
-    [field: SerializeField] 
-    private CircleObject CirclePrefab { get; set; }
+    [SerializeField] private CircleObject _circlePrefab;
 
     private List<CircleObject> SpawnedCircles { get; } = new();
 
     public CircleObject SpawnCircle(Rigidbody2D connectedRigidbody)
     {
-        var circleObject = Instantiate(CirclePrefab, SpawnTransform);
+        CircleObject circleObject = Instantiate(_circlePrefab, _spawnTransform);
         circleObject.SetConnectedRigidbody2D(connectedRigidbody);
         SpawnedCircles.Add(circleObject);
         return circleObject;
@@ -23,10 +21,12 @@ public class SpawnCircleController : MonoBehaviour
 
     public void ClearSpawnedCircles()
     {
-        for (var i = SpawnedCircles.Count - 1; i >= 0; i--)
+        for (int i = SpawnedCircles.Count - 1; i >= 0; i--)
         {
-            var circleObject = SpawnedCircles[i];
-            if (circleObject) Destroy(circleObject.gameObject);
+            CircleObject circleObject = SpawnedCircles[i];
+
+            if (circleObject)
+                Destroy(circleObject.gameObject);
         }
 
         SpawnedCircles.Clear();

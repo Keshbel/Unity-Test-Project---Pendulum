@@ -7,8 +7,11 @@ namespace Pendulum.Domain
     {
         public MatchLine(MatchLineType type, CellColor color, IReadOnlyList<BoardPosition> positions)
         {
-            if (color == CellColor.None) throw new ArgumentException("Matched lines must have a color.", nameof(color));
-            if (positions == null || positions.Count == 0) throw new ArgumentException("A matched line must include positions.", nameof(positions));
+            if (color == CellColor.None)
+                throw new ArgumentException("Matched lines must have a color.", nameof(color));
+
+            if (positions == null || positions.Count == 0)
+                throw new ArgumentException("A matched line must include positions.", nameof(positions));
 
             Type = type;
             Color = color;

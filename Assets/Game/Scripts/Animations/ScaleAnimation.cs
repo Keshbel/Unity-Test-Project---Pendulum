@@ -3,22 +3,20 @@ using UnityEngine;
 
 public class ScaleAnimation : MonoBehaviour
 {
-    [field: Header("Options")]
+    [Header("Options")]
     
-    [field: SerializeField, Tooltip("Duration of one scale animation step.")]
-    private float Duration { get; set; } = 0.5f;
+    [SerializeField, Tooltip("Duration of one scale animation step.")]
+    private float _duration = 0.5f;
     
-    [field: SerializeField]
-    private float ScaleMin { get; set; } = 0.75f;
+    [SerializeField] private float _scaleMin = 0.75f;
     
-    [field: SerializeField]
-    private float ScaleMax { get; set; } = 1.5f;
+    [SerializeField] private float _scaleMax = 1.5f;
     
     private Tweener _shakeTweener;
 
     private void OnEnable()
     {
-        transform.localScale = new Vector3(ScaleMin, ScaleMin, ScaleMin);
+        transform.localScale = new Vector3(_scaleMin, _scaleMin, _scaleMin);
         
         StartAnimation();
     }
@@ -31,6 +29,6 @@ public class ScaleAnimation : MonoBehaviour
     private void StartAnimation()
     {
         _shakeTweener?.Kill();
-        _shakeTweener = transform.DOScale(ScaleMax, Duration).SetLoops(-1, LoopType.Yoyo);
+        _shakeTweener = transform.DOScale(_scaleMax, _duration).SetLoops(-1, LoopType.Yoyo);
     }
 }

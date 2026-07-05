@@ -126,6 +126,40 @@ namespace Pendulum.Tests.EditMode
             Assert.That(session.Score, Is.EqualTo(result.ScoreAwarded));
         }
 
+        [Test]
+        public void CollapseMovesCellsDownAfterClearingPositions()
+        {
+            var board = CreateBoard();
+            board.SetCell(0, 0, CellColor.Red);
+            board.SetCell(0, 1, CellColor.Green);
+            board.SetCell(0, 2, CellColor.Blue);
+
+            var moves = board.RemoveAndCollapse(new[] { new BoardPosition(0, 2) });
+
+            Assert.That(moves, Has.Count.EqualTo(2));
+            Assert.That(board.GetCell(0, 0), Is.EqualTo(CellColor.None));
+            Assert.That(board.GetCell(0, 1), Is.EqualTo(CellColor.Red));
+            Assert.That(board.GetCell(0, 2), Is.EqualTo(CellColor.Green));
+        }
+
+        [Test]
+        public void ResolveBoardReturnsCollapseMovesForMatchedCells()
+        {
+            var board = CreateBoard();
+            SetRow(board, 2, CellColor.Red, CellColor.Red, CellColor.Red);
+            board.SetCell(0, 0, CellColor.Green);
+            board.SetCell(1, 0, CellColor.Blue);
+
+            var session = CreateSession(board);
+            var result = session.ResolveBoard();
+
+            Assert.That(result.HasMatches, Is.True);
+            Assert.That(result.CollapseMoves, Has.Count.EqualTo(2));
+            Assert.That(board.GetCell(0, 2), Is.EqualTo(CellColor.Green));
+            Assert.That(board.GetCell(1, 2), Is.EqualTo(CellColor.Blue));
+            Assert.That(board.GetCell(2, 2), Is.EqualTo(CellColor.None));
+        }
+
         private static BoardModel CreateBoard()
         {
             return new BoardModel(3, 3);

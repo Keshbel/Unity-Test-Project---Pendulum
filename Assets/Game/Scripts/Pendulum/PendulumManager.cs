@@ -34,8 +34,11 @@ public class PendulumManager : MonoBehaviour
 
     private void Update()
     {
-        if (!GameplayController || GameplayController.State != GameState.Playing) return;
-        if (!Input.anyKeyDown || !CurrentCircleObject) return;
+        if (!GameplayController || GameplayController.State != GameState.Playing)
+            return;
+
+        if (!Input.anyKeyDown || !CurrentCircleObject)
+            return;
         
         TriggerGridChecker?.StopChecking();
         
@@ -47,15 +50,19 @@ public class PendulumManager : MonoBehaviour
 
     public void SpawnCircleObject()
     {
-        if (!GameplayController || GameplayController.State != GameState.Playing) return;
-        if (CurrentCircleObject) return;
+        if (!GameplayController || GameplayController.State != GameState.Playing)
+            return;
+
+        if (CurrentCircleObject)
+            return;
         
         CurrentCircleObject = SpawnCircleController.SpawnCircle(Rigidbody2D);
     }
     
     private void DropTheCircle()
     {
-        if (!CurrentCircleObject) return;
+        if (!CurrentCircleObject)
+            return;
         
         CurrentCircleObject.DeactivateHingeJoint();
         CurrentCircleObject = null;
