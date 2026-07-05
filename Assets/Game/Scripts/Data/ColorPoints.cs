@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Pendulum.Domain;
 using UnityEngine;
 
 [CreateAssetMenu]
@@ -30,6 +31,23 @@ public class ColorPoints : ScriptableObject
     public int GetScoreForColor(CircleColor circleColor)
     {
         return ColorValuePoints.FirstOrDefault(colorPoint => colorPoint.circleColor == circleColor).colorValue;
+    }
+
+    public ScoreCalculator CreateScoreCalculator()
+    {
+        return new ScoreCalculator(ToScoreValues());
+    }
+
+    public Dictionary<CellColor, int> ToScoreValues()
+    {
+        var scoreValues = new Dictionary<CellColor, int>();
+
+        foreach (var colorPoint in ColorValuePoints)
+        {
+            scoreValues[CircleColorMapper.ToCellColor(colorPoint.circleColor)] = colorPoint.colorValue;
+        }
+
+        return scoreValues;
     }
 }
 

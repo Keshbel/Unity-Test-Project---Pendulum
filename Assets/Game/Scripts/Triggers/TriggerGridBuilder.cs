@@ -1,5 +1,3 @@
-using System;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class TriggerGridBuilder : MonoBehaviour
@@ -83,21 +81,6 @@ public class TriggerGridBuilder : MonoBehaviour
             triggerGo.AddComponent<CheckingLimitingTrigger>().DefaultTimeToDefeat = LimitingSeconds;
 
             rowPosition += RowOffset;
-        }
-    }
-}
-
-public class ColorCollection
-{
-    public readonly Dictionary<CircleColor, int> ColorDictionary;
-    
-    public ColorCollection()
-    {
-        ColorDictionary = new Dictionary<CircleColor, int>();
-
-        for (int i = 1; i < Enum.GetValues(typeof(CircleColor)).Length; i++)
-        {
-            ColorDictionary.Add((CircleColor)i, 0);
         }
     }
 }

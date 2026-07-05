@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using Pendulum.Domain;
 using UnityEngine;
 
 public class GameplayController : MonoBehaviour
@@ -19,22 +20,31 @@ public class GameplayController : MonoBehaviour
     
     public int Score { get; private set; }
 
+    private ScoreCalculator ScoreCalculator { get; set; }
+
     private void Awake()
     {
         IsGame = false;
         ReturnToMainMenu();
         
-        if (ColorPoints) return;
+        if (!ColorPoints)
+        {
+            var load = Resources.Load<ColorPoints>("Color Points");
+            if (load) ColorPoints = load;
+        }
 
-        var load = Resources.Load<ColorPoints>("Color Points");
-        if (load) ColorPoints = load;
+        BuildScoreCalculator();
     }
 
     public void AddScore(CircleColor circleColor)
     {
-        var score = ColorPoints.GetScoreForColor(circleColor);
+        EnsureScoreCalculator();
+        AddScore(ScoreCalculator.Calculate(CircleColorMapper.ToCellColor(circleColor)));
+    }
+
+    public void AddScore(int score)
+    {
         Score += score;
-        
         OnAddScore?.Invoke(score);
     }
     
@@ -44,6 +54,7 @@ public class GameplayController : MonoBehaviour
         Score = 0;
         
         GameSingleton.Instance.ScreenManager.SetGameScreen(GameScreen.Game);
+        GameSingleton.Instance.TriggerGridChecker.ResetBoard();
     }
     
     public void EndGame()
@@ -60,4 +71,27 @@ public class GameplayController : MonoBehaviour
     {
         GameSingleton.Instance.ScreenManager.SetGameScreen(GameScreen.Menu);
     }
+
+    private void BuildScoreCalculator()
+    {
+        if (!ColorPoints)
+        {
+            Debug.LogError("ColorPoints config is missing. Score calculation cannot be initialized.", this);
+            return;
+        }
+
+        ScoreCalculator = ColorPoints.CreateScoreCalculator();
+    }
+
+    private void EnsureScoreCalculator()
+    {
+        if (ScoreCalculator != null) return;
+
+        BuildScoreCalculator();
+        if (ScoreCalculator == null)
+        {
+            throw new InvalidOperationException("ScoreCalculator is not initialized.");
+        }
+    }
+
 }

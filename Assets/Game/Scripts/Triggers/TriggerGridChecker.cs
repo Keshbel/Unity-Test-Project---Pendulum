@@ -1,7 +1,5 @@
-using System;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
+using System.Collections.Generic;
+using Pendulum.Domain;
 using UnityEngine;
 
 public class TriggerGridChecker : MonoBehaviour
@@ -12,7 +10,7 @@ public class TriggerGridChecker : MonoBehaviour
     private float CheckerDelay { get; set; } = 2f;
     
     private TriggerGridBuilder TriggerGridBuilder { get; set; }
-    private CancellationTokenSource CancellationTokenSource { get; set; }
+    private GameSession GameSession { get; set; }
 
     private void Awake()
     {
@@ -31,104 +29,78 @@ public class TriggerGridChecker : MonoBehaviour
 
     public void StartChecking()
     {
-        CancellationTokenSource = new CancellationTokenSource();
-        
-        CheckTriggers();
+        StopChecking();
+        Invoke(nameof(CheckGrid), CheckerDelay);
     }
 
     public void StopChecking()
     {
-        CancellationTokenSource.Cancel();
+        CancelInvoke(nameof(CheckGrid));
     }
 
-    private async void CheckTriggers()
+    public void ResetBoard()
     {
-        var delay = TimeSpan.FromSeconds(CheckerDelay);
-        
-        while (!CancellationTokenSource.IsCancellationRequested)
+        if (TriggerGridBuilder?.TriggerInfos == null) return;
+
+        GameSession = CreateGameSession(CreateBoardSnapshot());
+    }
+
+    public void CheckGrid()
+    {
+        if (TriggerGridBuilder.TriggerInfos == null) return;
+
+        var board = CreateBoardSnapshot();
+        GameSession ??= CreateGameSession(board);
+        if (GameSession == null) return;
+
+        GameSession.ReplaceBoard(board);
+
+        var result = GameSession.ResolveBoard();
+        if (result.HasMatches)
         {
-            if (TriggerGridBuilder.TriggerInfos != null)
-            {
-                CheckingDiagonally(true);
-                CheckingDiagonally(false);
+            ApplyMatches(result);
+            return;
+        }
 
-                CheckAlongStraightLines(true);
-                CheckAlongStraightLines(false);
-
-                CheckForCompleteness();
-            }
-
-            try
-            {
-                await Task.Delay(delay, CancellationTokenSource.Token);
-                
-            }
-            catch { /* ignored */ }
+        if (result.IsGameOver)
+        {
+            GameSingleton.Instance.GameplayController.EndGame();
         }
     }
 
-    private void CheckForCompleteness()
+    private BoardModel CreateBoardSnapshot()
     {
-        foreach (var triggerInfo in TriggerGridBuilder.TriggerInfos)
+        var board = new BoardModel(TriggerGridBuilder.Column, TriggerGridBuilder.Row);
+
+        for (var column = 0; column < TriggerGridBuilder.Column; column++)
         {
-            if (triggerInfo.GetColor() == CircleColor.None) return; 
+            for (var row = 0; row < TriggerGridBuilder.Row; row++)
+            {
+                board.SetCell(column, row, CircleColorMapper.ToCellColor(TriggerGridBuilder.TriggerInfos[column, row].GetColor()));
+            }
         }
-        
-        GameSingleton.Instance.GameplayController.EndGame();
+
+        return board;
     }
 
-    private void CheckAlongStraightLines(bool isHorizontal)
+    private GameSession CreateGameSession(BoardModel board)
     {
-        for (var r = 0; r < TriggerGridBuilder.Row; r++)
+        var colorPoints = GameSingleton.Instance.GameplayController.ColorPoints;
+        if (!colorPoints)
         {
-            var colorCollection = new ColorCollection();
-
-            for (var c = 0; c < TriggerGridBuilder.Column; c++)
-            {
-                var color = isHorizontal ? TriggerGridBuilder.TriggerInfos[c, r].GetColor() :TriggerGridBuilder.TriggerInfos[r, c].GetColor();
-                if (color != CircleColor.None) colorCollection.ColorDictionary[color] += 1;
-            }
-
-            var isCombination = isHorizontal ? colorCollection.ColorDictionary.Any(key => key.Value >= TriggerGridBuilder.Row) : colorCollection.ColorDictionary.Any(key => key.Value >= TriggerGridBuilder.Column);
-            if (!isCombination) continue;
-
-            GameSingleton.Instance.GameplayController.AddScore(isHorizontal ? TriggerGridBuilder.TriggerInfos[0, r].GetColor() : TriggerGridBuilder.TriggerInfos[r, 0].GetColor());
-
-            GameSingleton.Instance.EffectsController.PlayExplosionEffect();
-
-            // Wake sleeping bodies before removing the matched line so physics contacts refresh.
-            foreach (var triggerInfo in TriggerGridBuilder.TriggerInfos)
-            {
-                triggerInfo.WakeUpRigidbody2D();
-            }
-            
-            for (int c = 0; c < TriggerGridBuilder.Column; c++)
-            {
-                if (isHorizontal) TriggerGridBuilder.TriggerInfos[c, r]?.DestroyCircle();
-                else TriggerGridBuilder.TriggerInfos[r, c]?.DestroyCircle();
-            }
+            Debug.LogError("ColorPoints config is missing. Grid rules cannot resolve scores.", this);
+            return null;
         }
+
+        return new GameSession(
+            board,
+            new MatchDetector(),
+            colorPoints.CreateScoreCalculator());
     }
 
-    private void CheckingDiagonally(bool isFromLeftTop)
+    private void ApplyMatches(BoardResolutionResult result)
     {
-        var columnIndex = isFromLeftTop ? TriggerGridBuilder.Column-1 : 0;
-
-        var colorCollection = new ColorCollection();
-        
-        for (int r = 0; r < TriggerGridBuilder.Row; r++)
-        {
-            var color = TriggerGridBuilder.TriggerInfos[r, columnIndex].GetColor();
-            if (color != CircleColor.None) colorCollection.ColorDictionary[color] += 1;
-            
-            columnIndex = isFromLeftTop ? columnIndex - 1 : columnIndex + 1;
-        }
-
-        var lineCount = TriggerGridBuilder.Row == TriggerGridBuilder.Column ? TriggerGridBuilder.Row : 0;
-        var isCombination = lineCount > 0 && colorCollection.ColorDictionary.Any(key => key.Value >= lineCount);
-        if (!isCombination) return;
-        
-        GameSingleton.Instance.GameplayController.AddScore(isFromLeftTop ? TriggerGridBuilder.TriggerInfos[0, TriggerGridBuilder.Column-1].GetColor() : TriggerGridBuilder.TriggerInfos[0, 0].GetColor());
+        GameSingleton.Instance.GameplayController.AddScore(result.ScoreAwarded);
 
         GameSingleton.Instance.EffectsController.PlayExplosionEffect();
             
@@ -137,14 +109,26 @@ public class TriggerGridChecker : MonoBehaviour
         {
             triggerInfo.WakeUpRigidbody2D();
         }
-        
-        columnIndex = isFromLeftTop ? TriggerGridBuilder.Column-1 : 0;
-        
-        for (int r = 0; r < TriggerGridBuilder.Row; r++)
+
+        foreach (var position in GetMatchedPositions(result.Matches))
         {
-            TriggerGridBuilder.TriggerInfos[r, columnIndex].DestroyCircle();
-            
-            columnIndex = isFromLeftTop ? columnIndex - 1 : columnIndex + 1;
+            TriggerGridBuilder.TriggerInfos[position.Column, position.Row].DestroyCircle();
         }
     }
+
+    private static HashSet<BoardPosition> GetMatchedPositions(IEnumerable<MatchLine> matches)
+    {
+        var positions = new HashSet<BoardPosition>();
+
+        foreach (var match in matches)
+        {
+            foreach (var position in match.Positions)
+            {
+                positions.Add(position);
+            }
+        }
+
+        return positions;
+    }
+
 }
