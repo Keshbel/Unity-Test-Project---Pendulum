@@ -27,6 +27,17 @@ public class TriggerGridBuilder : MonoBehaviour
     public float ColumnOffset { get; private set; } = 1.6f;
 
     public TriggerInfo[,] TriggerInfos { get; private set; }
+    private GameplayController GameplayController { get; set; }
+
+    public void Construct(GameplayController gameplayController)
+    {
+        GameplayController = gameplayController;
+
+        foreach (var limitingTrigger in GetComponentsInChildren<CheckingLimitingTrigger>(true))
+        {
+            limitingTrigger.Construct(gameplayController);
+        }
+    }
 
     private void Awake()
     {
@@ -78,7 +89,9 @@ public class TriggerGridBuilder : MonoBehaviour
         for (int r = 0; r < Row; r++)
         {
             var triggerGo = CreateGameObject("Trigger " + r, limitingGo.transform, new Vector3(rowPosition, 0));
-            triggerGo.AddComponent<CheckingLimitingTrigger>().DefaultTimeToDefeat = LimitingSeconds;
+            var limitingTrigger = triggerGo.AddComponent<CheckingLimitingTrigger>();
+            limitingTrigger.SetDefaultTimeToDefeat(LimitingSeconds);
+            if (GameplayController) limitingTrigger.Construct(GameplayController);
 
             rowPosition += RowOffset;
         }

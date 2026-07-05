@@ -1,16 +1,16 @@
 using System;
-using System.Linq;
 using Pendulum.Domain;
 using UnityEngine;
 
 public class GameplayController : MonoBehaviour
 {
-    public Action<int> OnAddScore;
+    public event Action<int> OnAddScore;
+    public event Action<GameState> OnStateChanged;
     
     [field: Header("States")]
     
     [field: SerializeField]
-    public bool IsGame { get; set; }
+    public bool IsGame { get; private set; }
     
     
     [field: Header("Options")]
@@ -19,21 +19,38 @@ public class GameplayController : MonoBehaviour
     public ColorPoints ColorPoints { get; private set; }
     
     public int Score { get; private set; }
+    public GameState State { get; private set; } = GameState.Menu;
 
     private ScoreCalculator ScoreCalculator { get; set; }
+    private ScreenManager ScreenManager { get; set; }
+    private TriggerGridChecker TriggerGridChecker { get; set; }
+    private SpawnCircleController SpawnCircleController { get; set; }
+
+    public void Construct(
+        ScreenManager screenManager,
+        TriggerGridChecker triggerGridChecker,
+        ColorPoints colorPoints,
+        SpawnCircleController spawnCircleController)
+    {
+        ScreenManager = screenManager;
+        TriggerGridChecker = triggerGridChecker;
+        SpawnCircleController = spawnCircleController;
+        if (colorPoints) ColorPoints = colorPoints;
+
+        BuildScoreCalculator();
+        SetState(GameState.Menu);
+    }
 
     private void Awake()
     {
-        IsGame = false;
-        ReturnToMainMenu();
-        
         if (!ColorPoints)
         {
             var load = Resources.Load<ColorPoints>("Color Points");
             if (load) ColorPoints = load;
         }
 
-        BuildScoreCalculator();
+        if (ColorPoints) BuildScoreCalculator();
+        SetState(GameState.Menu);
     }
 
     public void AddScore(CircleColor circleColor)
@@ -50,26 +67,31 @@ public class GameplayController : MonoBehaviour
     
     public void StartGame()
     {
-        IsGame = true;
         Score = 0;
-        
-        GameSingleton.Instance.ScreenManager.SetGameScreen(GameScreen.Game);
-        GameSingleton.Instance.TriggerGridChecker.ResetBoard();
+        SpawnCircleController?.ClearSpawnedCircles();
+        TriggerGridChecker?.ResetBoard();
+        SetState(GameState.Playing);
     }
     
     public void EndGame()
     {
-        IsGame = false;
-        
-        GameSingleton.Instance.ScreenManager.SetGameScreen(GameScreen.Stats);
-        
-        var circles = FindObjectsByType<CircleObject>(FindObjectsInactive.Include, FindObjectsSortMode.None).ToList();
-        circles.ForEach(circle => Destroy(circle.gameObject));
+        SetState(GameState.GameOver);
+        SpawnCircleController?.ClearSpawnedCircles();
     }
 
-    public static void ReturnToMainMenu()
+    public void SetResolving()
     {
-        GameSingleton.Instance.ScreenManager.SetGameScreen(GameScreen.Menu);
+        SetState(GameState.Resolving);
+    }
+
+    public void SetPlaying()
+    {
+        SetState(GameState.Playing);
+    }
+
+    public void ReturnToMainMenu()
+    {
+        SetState(GameState.Menu);
     }
 
     private void BuildScoreCalculator()
@@ -94,4 +116,27 @@ public class GameplayController : MonoBehaviour
         }
     }
 
+    private void SetState(GameState state)
+    {
+        State = state;
+        IsGame = state == GameState.Playing;
+
+        if (ScreenManager)
+        {
+            ScreenManager.SetGameScreen(ToGameScreen(state));
+        }
+
+        OnStateChanged?.Invoke(state);
+    }
+
+    private static GameScreen ToGameScreen(GameState state)
+    {
+        return state switch
+        {
+            GameState.Playing => GameScreen.Game,
+            GameState.Resolving => GameScreen.Game,
+            GameState.GameOver => GameScreen.Stats,
+            _ => GameScreen.Menu
+        };
+    }
 }

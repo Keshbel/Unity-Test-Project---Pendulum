@@ -7,6 +7,14 @@ public class PendulumManager : MonoBehaviour
     private SpawnCircleController SpawnCircleController { get; set; }
     
     private Rigidbody2D Rigidbody2D { get; set; }
+    private GameplayController GameplayController { get; set; }
+    private TriggerGridChecker TriggerGridChecker { get; set; }
+
+    public void Construct(GameplayController gameplayController, TriggerGridChecker triggerGridChecker)
+    {
+        GameplayController = gameplayController;
+        TriggerGridChecker = triggerGridChecker;
+    }
 
     private void Awake()
     {
@@ -19,21 +27,28 @@ public class PendulumManager : MonoBehaviour
         SpawnCircleObject();
     }
 
+    private void OnDisable()
+    {
+        CancelInvoke(nameof(SpawnCircleObject));
+    }
+
     private void Update()
     {
+        if (!GameplayController || GameplayController.State != GameState.Playing) return;
         if (!Input.anyKeyDown || !CurrentCircleObject) return;
         
-        GameSingleton.Instance.TriggerGridChecker.StopChecking();
+        TriggerGridChecker?.StopChecking();
         
         DropTheCircle();
         Invoke(nameof(SpawnCircleObject), 1);
         
-        GameSingleton.Instance.TriggerGridChecker.StartChecking();
+        TriggerGridChecker?.StartChecking();
     }
 
     public void SpawnCircleObject()
     {
-        if (!GameSingleton.Instance.GameplayController.IsGame) return;
+        if (!GameplayController || GameplayController.State != GameState.Playing) return;
+        if (CurrentCircleObject) return;
         
         CurrentCircleObject = SpawnCircleController.SpawnCircle(Rigidbody2D);
     }

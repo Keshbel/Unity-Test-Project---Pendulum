@@ -40,7 +40,11 @@ public class TriggerInfo : MonoBehaviour
 
     public void DestroyCircle()
     {
-        if (!CircleObject) return;
+        if (!CircleObject)
+        {
+            CircleObject = null;
+            return;
+        }
         
         CircleObject.DestroyObject();
         CircleObject = null;

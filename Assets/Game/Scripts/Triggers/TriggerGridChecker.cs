@@ -11,6 +11,16 @@ public class TriggerGridChecker : MonoBehaviour
     
     private TriggerGridBuilder TriggerGridBuilder { get; set; }
     private GameSession GameSession { get; set; }
+    private GameplayController GameplayController { get; set; }
+    private EffectsController EffectsController { get; set; }
+    private ColorPoints ColorPoints { get; set; }
+
+    public void Construct(GameplayController gameplayController, EffectsController effectsController, ColorPoints colorPoints)
+    {
+        GameplayController = gameplayController;
+        EffectsController = effectsController;
+        ColorPoints = colorPoints;
+    }
 
     private void Awake()
     {
@@ -48,6 +58,7 @@ public class TriggerGridChecker : MonoBehaviour
     public void CheckGrid()
     {
         if (TriggerGridBuilder.TriggerInfos == null) return;
+        if (!GameplayController || GameplayController.State != GameState.Playing) return;
 
         var board = CreateBoardSnapshot();
         GameSession ??= CreateGameSession(board);
@@ -58,13 +69,15 @@ public class TriggerGridChecker : MonoBehaviour
         var result = GameSession.ResolveBoard();
         if (result.HasMatches)
         {
+            GameplayController.SetResolving();
             ApplyMatches(result);
+            GameplayController.SetPlaying();
             return;
         }
 
         if (result.IsGameOver)
         {
-            GameSingleton.Instance.GameplayController.EndGame();
+            GameplayController.EndGame();
         }
     }
 
@@ -85,7 +98,7 @@ public class TriggerGridChecker : MonoBehaviour
 
     private GameSession CreateGameSession(BoardModel board)
     {
-        var colorPoints = GameSingleton.Instance.GameplayController.ColorPoints;
+        var colorPoints = ColorPoints ? ColorPoints : GameplayController?.ColorPoints;
         if (!colorPoints)
         {
             Debug.LogError("ColorPoints config is missing. Grid rules cannot resolve scores.", this);
@@ -100,9 +113,9 @@ public class TriggerGridChecker : MonoBehaviour
 
     private void ApplyMatches(BoardResolutionResult result)
     {
-        GameSingleton.Instance.GameplayController.AddScore(result.ScoreAwarded);
+        GameplayController.AddScore(result.ScoreAwarded);
 
-        GameSingleton.Instance.EffectsController.PlayExplosionEffect();
+        EffectsController?.PlayExplosionEffect();
             
         // Wake sleeping bodies before removing the matched line so physics contacts refresh.
         foreach (var triggerInfo in TriggerGridBuilder.TriggerInfos)

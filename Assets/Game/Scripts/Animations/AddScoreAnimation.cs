@@ -19,12 +19,33 @@ public class AddScoreAnimation : MonoBehaviour
     private float MaxScale { get; set; } = 1.5f;
     
     private Tweener _tweener;
+    private GameplayController GameplayController { get; set; }
+
+    public void Construct(GameplayController gameplayController)
+    {
+        if (GameplayController != null)
+        {
+            GameplayController.OnAddScore -= SetAdditionalScore;
+        }
+
+        GameplayController = gameplayController;
+        if (GameplayController != null)
+        {
+            GameplayController.OnAddScore += SetAdditionalScore;
+        }
+    }
 
     private void Awake()
     {
         if (!ScoreText) ScoreText = GetComponent<TMP_Text>();
-        
-        GameSingleton.Instance.GameplayController.OnAddScore += SetAdditionalScore;
+    }
+
+    private void OnDestroy()
+    {
+        if (GameplayController != null)
+        {
+            GameplayController.OnAddScore -= SetAdditionalScore;
+        }
     }
 
     private void StartAnimation()

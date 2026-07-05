@@ -6,12 +6,23 @@ public class CheckingLimitingTrigger : MonoBehaviour
 {
     [field: Header("Time to Defeat")]
     
-    public float DefaultTimeToDefeat { get; set; } = 3f;
+    public float DefaultTimeToDefeat { get; private set; } = 3f;
     private float TimeToDefeat { get; set; }
     
     [field: Header("Circle Colliders")]
     
     private List<Collider2D> CircleColliders { get; set; } = new();
+    private GameplayController GameplayController { get; set; }
+
+    public void Construct(GameplayController gameplayController)
+    {
+        GameplayController = gameplayController;
+    }
+
+    public void SetDefaultTimeToDefeat(float seconds)
+    {
+        DefaultTimeToDefeat = seconds;
+    }
 
     private void Awake()
     {
@@ -29,7 +40,10 @@ public class CheckingLimitingTrigger : MonoBehaviour
         if (!CircleColliders.Contains(other)) return;
 
         TimeToDefeat += Time.deltaTime;
-        if (TimeToDefeat >= DefaultTimeToDefeat & GameSingleton.Instance.GameplayController.IsGame) GameSingleton.Instance.GameplayController.EndGame();
+        if (TimeToDefeat >= DefaultTimeToDefeat && GameplayController && GameplayController.State == GameState.Playing)
+        {
+            GameplayController.EndGame();
+        }
     }
 
     private void OnTriggerExit2D(Collider2D other)
