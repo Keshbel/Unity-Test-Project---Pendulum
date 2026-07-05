@@ -60,7 +60,7 @@ The GitHub CI workflow also runs the pure domain tests through a temporary NUnit
 
 Playable builds should be distributed through GitHub Releases.
 
-The repository includes a release build workflow at `.github/workflows/release-build.yml`. It is intended to build a Windows release artifact with GameCI and attach it to a GitHub Release.
+The repository includes a release build workflow at `.github/workflows/release-build.yml`. It builds Windows and Android artifacts with GameCI and attaches them to a GitHub Release.
 
 Required repository secrets for the release workflow:
 
