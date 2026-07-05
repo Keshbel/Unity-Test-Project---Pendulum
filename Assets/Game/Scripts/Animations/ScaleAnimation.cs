@@ -5,7 +5,7 @@ public class ScaleAnimation : MonoBehaviour
 {
     [field: Header("Options")]
     
-    [field: SerializeField, Tooltip("Время между изменение от минимального до максимального значения Scale.")]
+    [field: SerializeField, Tooltip("Duration of one scale animation step.")]
     private float Duration { get; set; } = 0.5f;
     
     [field: SerializeField]

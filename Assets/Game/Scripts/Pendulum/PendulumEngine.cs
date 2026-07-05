@@ -13,9 +13,6 @@ public class PendulumEngine : MonoBehaviour
 
     #region Privates
     
-    /// <summary>
-    /// Движение по часовой стрелке?
-    /// </summary>
     private bool MovingClockwise { get; set; }
     
     private Rigidbody2D _rigidbody2D;

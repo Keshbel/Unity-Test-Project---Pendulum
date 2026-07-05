@@ -6,26 +6,26 @@ public class TriggerGridBuilder : MonoBehaviour
 {
     [field: Header("Grid")]
     
-    [field: SerializeField, Tooltip("Строка (горизонтально)")]
+    [field: SerializeField, Tooltip("Number of grid rows.")]
     public int Row { get; private set; } = 3;
     
-    [field: SerializeField, Tooltip("Колонка (вертикально)")]
+    [field: SerializeField, Tooltip("Number of grid columns.")]
     public int Column { get; private set; } = 3;
     
     [field: Header("Is Limiting Triggers")]
 
-    [field: SerializeField, Tooltip("Создавать ли триггер-ограничитель над сеткой?")]
+    [field: SerializeField, Tooltip("Creates height limit triggers above the grid.")]
     public bool IsLimitingTrigger { get; private set; } = true;
 
-    [field: SerializeField, Tooltip("Сколько секунд может быть нарушение высоты?")]
+    [field: SerializeField, Tooltip("Allowed time above the grid before ending the game.")]
     public float LimitingSeconds { get; private set; } = 3f;
     
     [field: Header("Options")]
     
-    [field: SerializeField, Tooltip("Строка (горизонтально)")]
+    [field: SerializeField, Tooltip("Horizontal spacing between grid columns.")]
     public float RowOffset { get; private set; } = 1.88f;
     
-    [field: SerializeField, Tooltip("Колонка (вертикально)")]
+    [field: SerializeField, Tooltip("Vertical spacing between grid rows.")]
     public float ColumnOffset { get; private set; } = 1.6f;
 
     public TriggerInfo[,] TriggerInfos { get; private set; }

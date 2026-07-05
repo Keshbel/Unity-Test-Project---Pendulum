@@ -8,7 +8,7 @@ public class ColorPoints : ScriptableObject
 {
     [field: Header("Color Value Points")]
     
-    [field: SerializeField, Tooltip("Число очков за цвет.")] 
+    [field: SerializeField, Tooltip("Score awarded for each circle color.")]
     public List<ColorPoint> ColorValuePoints { get; private set; }
 
     public ColorPoints()

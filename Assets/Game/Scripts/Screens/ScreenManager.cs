@@ -8,7 +8,7 @@ public class ScreenManager : MonoBehaviour
 
     [field: Header("Screens")]
     
-    [field: SerializeField, Tooltip("Все экраны игры.")]
+    [field: SerializeField, Tooltip("All game screens in display order.")]
     public List<ScreenObject> Screens { get; private set; } = new();
 
     public void SetGameScreen(GameScreen gameScreen)

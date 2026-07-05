@@ -14,7 +14,7 @@ public class GameplayController : MonoBehaviour
     
     [field: Header("Options")]
     
-    [field: SerializeField, Tooltip("Ценность цветов.")]
+    [field: SerializeField, Tooltip("Score value for each circle color.")]
     public ColorPoints ColorPoints { get; private set; }
     
     public int Score { get; private set; }
@@ -40,11 +40,9 @@ public class GameplayController : MonoBehaviour
     
     public void StartGame()
     {
-        // стартовые параметры
         IsGame = true;
         Score = 0;
         
-        // перейти ко второму экрану
         GameSingleton.Instance.ScreenManager.SetGameScreen(GameScreen.Game);
     }
     
@@ -52,10 +50,8 @@ public class GameplayController : MonoBehaviour
     {
         IsGame = false;
         
-        // вызвать третий экран c количеством очков и кнопками
         GameSingleton.Instance.ScreenManager.SetGameScreen(GameScreen.Stats);
         
-        // очищаем поле
         var circles = FindObjectsByType<CircleObject>(FindObjectsInactive.Include, FindObjectsSortMode.None).ToList();
         circles.ForEach(circle => Destroy(circle.gameObject));
     }

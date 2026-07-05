@@ -8,7 +8,7 @@ public class TriggerGridChecker : MonoBehaviour
 {
     [field: Header("Delay")]
     
-    [field: SerializeField, Tooltip("Через какое время проверка клеток?")]
+    [field: SerializeField, Tooltip("Delay between grid checks in seconds.")]
     private float CheckerDelay { get; set; } = 2f;
     
     private TriggerGridBuilder TriggerGridBuilder { get; set; }
@@ -92,19 +92,16 @@ public class TriggerGridChecker : MonoBehaviour
             var isCombination = isHorizontal ? colorCollection.ColorDictionary.Any(key => key.Value >= TriggerGridBuilder.Row) : colorCollection.ColorDictionary.Any(key => key.Value >= TriggerGridBuilder.Column);
             if (!isCombination) continue;
 
-            // начисляем очки
             GameSingleton.Instance.GameplayController.AddScore(isHorizontal ? TriggerGridBuilder.TriggerInfos[0, r].GetColor() : TriggerGridBuilder.TriggerInfos[r, 0].GetColor());
 
-            // вызываем эффект, перекрывающий экран
             GameSingleton.Instance.EffectsController.PlayExplosionEffect();
 
-            // будим всех, чтобы коллайдеры не тупили (здесь можно оптимизировать, но мне уже лень, мне это не оплатят :) )
+            // Wake sleeping bodies before removing the matched line so physics contacts refresh.
             foreach (var triggerInfo in TriggerGridBuilder.TriggerInfos)
             {
                 triggerInfo.WakeUpRigidbody2D();
             }
             
-            // удаляем уже ненужные кругляшки
             for (int c = 0; c < TriggerGridBuilder.Column; c++)
             {
                 if (isHorizontal) TriggerGridBuilder.TriggerInfos[c, r]?.DestroyCircle();
@@ -119,7 +116,6 @@ public class TriggerGridChecker : MonoBehaviour
 
         var colorCollection = new ColorCollection();
         
-        // проверка по диагонали
         for (int r = 0; r < TriggerGridBuilder.Row; r++)
         {
             var color = TriggerGridBuilder.TriggerInfos[r, columnIndex].GetColor();
@@ -132,19 +128,16 @@ public class TriggerGridChecker : MonoBehaviour
         var isCombination = lineCount > 0 && colorCollection.ColorDictionary.Any(key => key.Value >= lineCount);
         if (!isCombination) return;
         
-        // начисляем очки
         GameSingleton.Instance.GameplayController.AddScore(isFromLeftTop ? TriggerGridBuilder.TriggerInfos[0, TriggerGridBuilder.Column-1].GetColor() : TriggerGridBuilder.TriggerInfos[0, 0].GetColor());
 
-        // вызываем эффект, перекрывающий экран
         GameSingleton.Instance.EffectsController.PlayExplosionEffect();
             
-        // будим всех, чтобы коллайдеры не тупили (здесь можно оптимизировать, но мне уже лень, мне это не оплатят :) )
+        // Wake sleeping bodies before removing the matched line so physics contacts refresh.
         foreach (var triggerInfo in TriggerGridBuilder.TriggerInfos)
         {
             triggerInfo.WakeUpRigidbody2D();
         }
         
-        // удаляем уже ненужные кругляшки
         columnIndex = isFromLeftTop ? TriggerGridBuilder.Column-1 : 0;
         
         for (int r = 0; r < TriggerGridBuilder.Row; r++)
