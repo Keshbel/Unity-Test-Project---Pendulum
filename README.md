@@ -4,121 +4,70 @@
 
 A compact Unity gameplay architecture sample focused on physics interaction, match detection, score rules, and testable code.
 
-## Gameplay Overview
+## Gameplay
 
-Pendulum Grid Match is a small 2D Unity project where colored circles are released from a swinging pendulum into a 3x3 trigger grid. The player drops the current circle, waits for it to settle into the grid, and scores when a horizontal, vertical, or diagonal line contains matching colors.
+Pendulum Grid Match is a small 2D game where colored balls are released from a swinging pendulum into a 3x3 grid. The player scores by forming a straight horizontal, vertical, or diagonal line from balls of the same color.
 
-The game ends when the grid is full without a valid match or when circles remain above the grid height limit for too long.
+The game ends when the grid is full without a valid match or when balls remain above the grid limit for too long.
 
-The board cells are shown visually during gameplay. When a released ball slows down inside a cell, the cell gently pulls it toward the center to make matches easier to read and resolve.
+## Technical Highlights
 
-## Key Technical Highlights
-
-- Physics-driven pendulum movement and circle drops using Unity 2D rigidbodies and joints.
-- Runtime-built trigger grid for detecting occupied cells.
-- Color-based scoring configured through a `ScriptableObject` and resolved through a pure `ScoreCalculator`.
-- Pure C# board, match, scoring, and game-session rules covered by EditMode tests.
-- Explicit `GameState` flow for menu, playing, resolving, and game-over states.
-- Legacy scene bootstrap isolated in one place while gameplay classes use constructed dependencies.
-- Runtime cell visuals and a light cell magnet help make the board state easier to read.
-- Main menu hint text and a simple English/Russian language toggle are driven by a localization table asset.
-- Simple screen flow for menu, gameplay, and results states.
-- Small controller classes that make the current responsibilities easy to inspect before deeper refactoring.
-
-## Architecture Overview
-
-The current project is intentionally compact and still close to its original test-assignment form, but core rules now live outside MonoBehaviour-heavy scene code.
-
-- `Assets/Game/Scripts/Domain` contains the pure board model, match detector, score calculator, and game-session resolution classes.
-- `TriggerGridChecker` snapshots Unity trigger state into the domain board model, then applies the resolved result to scene objects.
-- `GameplayController` owns explicit scene-level game state, score display events, screen transitions, and end-game cleanup.
-- `PendulumManager`, `PendulumEngine`, and `SpawnCircleController` handle pendulum movement, input, spawning, and circle release.
-- `TriggerGridBuilder`, `TriggerInfo`, and `CheckingLimitingTrigger` remain Unity trigger adapters.
-- `CircleObject` wraps circle color assignment, joint release, rigidbody wake-up, and destruction.
-- `ScreenManager`, `MenuView`, `StatsView`, and animation scripts drive the simple UI flow.
-- `GameSingleton` is kept as a legacy scene bootstrapper only. Runtime classes receive dependencies through `Construct` methods instead of calling it directly.
-
-The architecture is still not presented as final. A future pass should continue reducing scene-level coupling and global lookups.
+- Unity 2D pendulum interaction using rigidbodies and joints.
+- Runtime trigger grid with visual cell markers and light center magnet behavior.
+- Pure C# domain layer for board state, match detection, scoring, collapse, and game-over rules.
+- EditMode/domain tests for deterministic gameplay rules.
+- ScriptableObject score and localization data.
+- Explicit game states for menu, play, resolving, and game over.
+- Small Unity adapter layer around scene objects, UI, effects, spawning, and physics.
 
 ## Project Structure
 
 ```text
 Assets/Game/
-  Materials/       Runtime materials used by the game.
-  Prefabs/         Circle prefab and related gameplay prefabs.
-  Resources/       Color score data loaded by the gameplay controller.
+  Resources/       Score and localization data.
   Scenes/          Main playable scene.
-  Scripts/         Domain rules plus Unity gameplay, UI, trigger, and animation scripts.
-  Tests/EditMode/  Pure gameplay rule tests.
-  Sprites/         Project-specific visual assets.
+  Scripts/Domain/  Pure C# gameplay rules.
+  Scripts/         Unity runtime adapters, UI, triggers, pendulum, and effects.
+  Tests/EditMode/  Domain rule tests.
+  Prefabs/         Gameplay prefabs.
 
-.github/workflows/ License-free domain test workflow.
-Assets/JMO Assets/ Third-party visual effect assets used by the project.
 Packages/          Unity package manifest and lock file.
-ProjectSettings/   Unity project settings required to open the project.
+ProjectSettings/   Unity project settings.
 docs/              Architecture and refactoring notes.
 ```
 
-## How To Open The Project
+## Open And Run
 
-1. Install Unity `6000.3.11f1` or a compatible Unity 6 editor version.
-2. Open this repository folder from Unity Hub.
-3. Let Unity restore packages from `Packages/manifest.json`.
-4. Open `Assets/Game/Scenes/Game.unity`.
-
-## How To Run The Game
-
-1. Open `Assets/Game/Scenes/Game.unity`.
-2. Press Play in the Unity Editor.
-3. Use the start button to enter gameplay.
-4. Press or tap to release the current pendulum circle.
+1. Install Unity `6000.3.11f1` or a compatible Unity 6 version.
+2. Open the repository folder from Unity Hub.
+3. Open `Assets/Game/Scenes/Game.unity`.
+4. Press Play.
+5. Start the game from the menu and press/click to release the current ball.
 
 ## Tests
 
-EditMode tests now cover the pure board, match, scoring, and game-session rules. They do not depend on scenes, physics, GameObjects, or real time.
+The domain tests cover board matches, scoring, collapse, and game-over logic without relying on Unity physics or scene objects.
 
-Run them from:
+Run tests from Unity Test Runner:
 
-- Unity Editor: `Window > General > Test Runner`
-- Command line: Unity batchmode test execution for the `Pendulum.Tests.EditMode` assembly
+```text
+Window > General > Test Runner
+```
 
-The GitHub workflow uses a separate license-free path that copies the pure domain files into a temporary NUnit project and runs `dotnet test`. That CI path validates domain rules only; it is not a replacement for opening the scene in Unity before publishing a build.
-
-## CI
-
-The repository includes `.github/workflows/ci.yml`, which runs the pure C# domain tests through a temporary NUnit project. This keeps the default CI path license-free and verifies the board, match, scoring, and session rules without opening Unity.
-
-Unity EditMode or PlayMode automation should be added as a separate job after Unity license secrets are configured for the repository. The current CI does not compile scenes, prefabs, or MonoBehaviour scripts.
-
-## Build Information
-
-No release build is committed to the repository. Portfolio builds should be attached through GitHub Releases rather than stored in source control.
-
-The project currently targets Unity 6 and uses the package set defined in `Packages/manifest.json`. Before publishing a build, verify the active target platform, player settings, and scene list in Unity's Build Profiles or Build Settings.
+The GitHub CI workflow also runs the pure domain tests through a temporary NUnit project with `dotnet test`. This keeps the default CI path license-free. It does not replace a manual Unity scene check before publishing a build.
 
 ## Releases
 
-Playable builds should be published through GitHub Releases and attached as release assets. The README intentionally does not link to external cloud builds as the primary distribution path.
+Playable builds should be distributed through GitHub Releases.
 
-## Original Constraint
+The repository includes a release build workflow at `.github/workflows/release-build.yml`. It is intended to build a Windows release artifact with GameCI and attach it to a GitHub Release.
 
-This project started as a roughly 10-hour Unity test assignment. The current repository is being prepared as a portfolio-ready sample through incremental cleanup and refactoring passes.
+Required repository secrets for the release workflow:
 
-Pass 1 focused on repository presentation, documentation, and low-risk source cleanup. Pass 2 extracted core gameplay rules into a testable pure C# domain layer. Pass 3 polished Unity integration, isolated legacy global lookup usage, added explicit state flow, and added CI.
+- `UNITY_LICENSE`
+- `UNITY_EMAIL`
+- `UNITY_PASSWORD`
 
-## Future Improvements
+## Background
 
-- Replace the remaining legacy bootstrapper fallback lookups with fully assigned scene references.
-- Reduce Unity-side result application responsibilities in `TriggerGridChecker` further if the scene grows.
-- Add scene-level smoke coverage after references and timing are stable.
-- Review package dependencies and remove unused optional packages after confirming project requirements.
-- Prepare release builds and attach them to GitHub Releases.
-
-## Honest Limitations
-
-- Unity presentation and object lifetime are still coupled to MonoBehaviours, scene objects, and physics callbacks.
-- The project has EditMode tests for pure rules, but no PlayMode scene tests yet.
-- Match resolution is pure, but visual side effects are still applied from `TriggerGridChecker`.
-- `GameSingleton` remains as an isolated compatibility bootstrapper for the existing scene.
-- Some dependencies are broader than the project likely needs and should be reviewed in a later cleanup pass.
-- The project still reflects its test-assignment origin and is not presented as a finished production architecture.
+This project started as a short Unity test assignment and was later cleaned up into a portfolio-oriented gameplay architecture sample. The current codebase keeps the original gameplay idea while separating core rules from Unity scene behavior.
