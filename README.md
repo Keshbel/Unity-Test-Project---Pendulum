@@ -4,6 +4,15 @@
 
 A compact Unity gameplay architecture sample focused on physics interaction, match detection, score rules, and testable code.
 
+<p align="center">
+  <img src="docs/media/gameplay-collapse.gif" alt="Pendulum Grid Match gameplay loop" width="720">
+</p>
+
+<p align="center">
+  <img src="docs/media/gameplay-menu.jpg" alt="Pendulum Grid Match main menu" width="360">
+  <img src="docs/media/gameplay-match.jpg" alt="Pendulum Grid Match match resolution" width="360">
+</p>
+
 ## Gameplay
 
 Pendulum Grid Match is a small 2D game where colored balls are released from a swinging pendulum into a 3x3 grid. The player scores by forming a straight horizontal, vertical, or diagonal line from balls of the same color.
@@ -61,12 +70,6 @@ The GitHub CI workflow also runs the pure domain tests through a temporary NUnit
 Playable builds should be distributed through GitHub Releases.
 
 The repository includes a release build workflow at `.github/workflows/release-build.yml`. It builds Windows and Android artifacts with GameCI and attaches them to a GitHub Release.
-
-Required repository secrets for the release workflow:
-
-- `UNITY_LICENSE`
-- `UNITY_EMAIL`
-- `UNITY_PASSWORD`
 
 ## Background
 
