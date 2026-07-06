@@ -5,12 +5,12 @@
 A compact Unity gameplay architecture sample focused on physics interaction, match detection, score rules, and testable code.
 
 <p align="center">
-  <img src="docs/media/gameplay-collapse.gif" alt="Pendulum Grid Match gameplay loop" width="720">
+  <img src="docs/media/gameplay-collapse.gif" alt="Pendulum Grid Match gameplay loop" width="480">
 </p>
 
 <p align="center">
-  <img src="docs/media/gameplay-menu.jpg" alt="Pendulum Grid Match main menu" width="360">
-  <img src="docs/media/gameplay-match.jpg" alt="Pendulum Grid Match match resolution" width="360">
+  <img src="docs/media/gameplay-menu.jpg" alt="Pendulum Grid Match main menu" width="240">
+  <img src="docs/media/gameplay-match.jpg" alt="Pendulum Grid Match match resolution" width="240">
 </p>
 
 ## Gameplay
